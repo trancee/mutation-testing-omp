@@ -69,6 +69,7 @@ dependencies {
 | Need | Doc |
 |------|-----|
 | Get started learning | [Tutorial: Your first mutation test](docs/tutorials/first-mutation-test.md) |
+| Bootstrap existing project | [Tutorial: Bootstrap into an existing project](docs/tutorials/bootstrap-existing-project.md) |
 | Interpret test results | [How-to: Interpret mutation testing results](docs/how-to/interpret-results.md) |
 | Fix surviving mutations | [How-to: Fix surviving mutations](docs/how-to/fix-surviving-mutations.md) |
 | Understand mutflow | [About mutflow's architecture](docs/explanation/mutflow-architecture.md) |

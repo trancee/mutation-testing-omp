@@ -89,7 +89,7 @@ class Calculator {
 }
 ```
 
-The `@MutationTarget` annotation tells mutflow which classes to mutate. We use it on `Calculator` because it contains business logic (comparisons, arithmetic).
+The `@MutationTarget` annotation marks classes that mutflow should mutate.
 
 ## Step 4: Write tests
 
@@ -139,32 +139,25 @@ Run the test task:
 gradle test
 ```
 
-You'll see output like:
-
-```
-CalculatorTest > Run without mutations > isPositive returns true for positive numbers() PASSED
-CalculatorTest > Mutation: (Calculator.kt:8) > → >= ... PASSED
-CalculatorTest > Mutation: (Calculator.kt:8) 0 → 1 ... PASSED
-...
-```
-
-All tests show `PASSED` — this is expected. During mutation runs, when a test catches a mutation, mutflow swallows the failure so it appears green. Check the summary at the bottom:
+We'll see all tests pass, including the mutation runs. At the bottom of the output, mutflow prints a summary:
 
 ```
 ╔════════════════════════════════╗
 ║      MUTATION TESTING SUMMARY  ║
 ╠════════════════════════════════╣
-║  Killed:  6  ✓                 ║
-║  Survived: 0  ✓                ║
+║  Killed:  3  ✓                 ║
+║  Survived: 3  ✗                ║
 ║  Timed out: 0  ✓               ║
 ╚════════════════════════════════╝
 ```
 
-## Step 6: Find and fix surviving mutations
+Some mutations survived. This is expected — our tests don't cover boundary values yet.
 
-Not all mutations are caught by the first tests we wrote. For example, `isPositive` checks `x > 0` — the `0 → 1` mutation changes this to `x > 1`. Our test checks `isPositive(5)` (true under both original and mutant) and `isPositive(-1)` (false under both). Neither catches the mutation.
+## Step 6: Add boundary tests to kill survivors
 
-Add a boundary test:
+mutflow found mutations our tests missed. For `isPositive(x: Int) = x > 0`, mutflow mutates `0` to `1` (making it `x > 1`) and `>` to `>=`. Our tests use `x = 5` (true under both) and `x = -1` (false under both) — neither catches the mutations.
+
+We need to test the boundary value `x = 0`. Under the original code, `isPositive(0)` returns `false`. Under the `0 → -1` mutant, it returns `true`. Our assertion should fail under the mutant:
 
 ```kotlin
 @Test
@@ -173,7 +166,7 @@ fun `isPositive returns false for zero`() {
 }
 ```
 
-This kills the `0 → -1` mutation (original: `0 > 0 = false`, mutant: `0 > -1 = true`). But the `0 → 1` mutation (mutant: `x > 1`) still survives because `isPositive(0)` is false under both `x > 0` and `x > 1`. Add one more:
+This kills the `0 → -1` mutation. But the `0 → 1` mutant (making it `x > 1`) still survives — `isPositive(0)` is `false` under both `x > 0` and `x > 1`. We need `x = 1`:
 
 ```kotlin
 @Test
@@ -182,19 +175,21 @@ fun `isPositive returns true for one`() {
 }
 ```
 
-This kills `0 → 1` (original: `1 > 0 = true`, mutant: `1 > 1 = false`).
+Under the original, `1 > 0 = true`. Under the `0 → 1` mutant, `1 > 1 = false` — our assertion catches it.
 
-Re-run `gradle test`. The summary should now show all mutations killed:
+Re-run `gradle test`. The summary now shows all mutations killed:
 
 ```
 ╔════════════════════════════════╗
 ║      MUTATION TESTING SUMMARY  ║
 ╠════════════════════════════════╣
-║  Killed:  7  ✓                 ║
+║  Killed:  5  ✓                 ║
 ║  Survived: 0  ✓                ║
 ║  Timed out: 0  ✓               ║
 ╚════════════════════════════════╝
 ```
+
+**100% mutation coverage achieved.**
 
 ## Summary
 

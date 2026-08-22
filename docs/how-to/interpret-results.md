@@ -54,9 +54,9 @@ Each survived mutation shows the source location and the operator change:
 
 ## Step 4: Fix surviving mutations
 
-For each surviving mutation, add a boundary test that distinguishes the original from the mutant. For a complete workflow including common patterns per operator type and the trap feature, see [How to fix surviving mutations](fix-surviving-mutations.md).
-(Skip ahead if you want the full workflow with patterns per operator type — this guide covers the essentials.)
+For each surviving mutation, add a boundary test that distinguishes the original from the mutant.
 
+For a complete workflow including common patterns per operator type and the trap feature, see [How to fix surviving mutations](fix-surviving-mutations.md).
 
 ```kotlin
 // Original: x > 0,  mutant: x >= 0
