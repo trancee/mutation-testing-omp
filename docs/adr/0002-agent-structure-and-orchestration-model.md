@@ -10,7 +10,7 @@ Scott-CC's mutation-testing plugin uses 5 domain-specific agents dispatched via 
 
 Key architectural differences:
 - Scott-CC: per-mutant git worktrees, 15 parallel executors, per-test-per-mutation matrix
-- mutflow: compile-once, runtime mutation selection, global synchronized lock, aggregate verdicts only
+- mutflow: compile-once, runtime mutation selection, global synchronized lock, aggregate verdicts (fork now tracks all killers for full per-test-per-mutation matrix)
 
 ## Decision
 

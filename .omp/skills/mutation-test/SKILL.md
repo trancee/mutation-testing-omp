@@ -49,7 +49,7 @@ Key mutflow constraints that affect orchestration:
 - JVM-only — no JS/Native/Android support in v1
 - Compile-once meta-mutant — all mutations injected at compile time, one active per run
 - Global synchronized lock — serializes mutation runs; parallel executors block-and-wait
-- Aggregate verdicts per mutation (first killer only) — not per-test-per-mutation matrices
+- Full per-test-per-mutation zombie detection — fork tracks all tests that kill each mutation (PR [#17](https://github.com/anschnapp/mutflow/pull/17) pending upstream)
 
 For the full explanation of how mutflow's compile-once meta-mutant architecture works and why it matters for the OMP agent system, see [About mutflow's architecture](../../../docs/explanation/mutflow-architecture.md). For the 5-agent system and how each agent contributes, see [About the OMP 5-agent system](../../../docs/explanation/agent-system.md).
 

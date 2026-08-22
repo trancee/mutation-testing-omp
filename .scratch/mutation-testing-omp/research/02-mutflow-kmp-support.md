@@ -578,7 +578,7 @@ In mutation testing, a "zombie mutation" is one that survives the entire test su
 
 ```kotlin
 sealed class MutationResult {
-    data class Killed(val testName: String) : MutationResult()  // Which test killed it
+    data class Killed(val testNames: Set<String>) : MutationResult()  // ALL tests that killed it (fork)
     data object Survived : MutationResult()                     // Zombie detected!
     data object TimedOut : MutationResult()                     // Likely infinite loop
 }
@@ -600,15 +600,13 @@ fun getSummary(): MutationTestingSummary {
 
 ### Per-Test Pass/Fail Information
 
-**Available:**
-- For **killed mutations**: Which test killed it (captured in `Killed(testName)`)
+**Available (via fork):**
+- For **killed mutations**: ALL tests that killed it (captured in `Killed(testNames: Set<String>)`)
 - For **survived mutations**: All tests passed (no specific per-test breakdown)
 - For **timed out**: Test failed with timeout exception
 
 **Not Available:**
-- Which specific test passed/failed for each mutation run
-- Per-test analysis when multiple tests execute the same code path
-
+- Per-test pass/fail breakdown in JUnit XML (all tests show as "passed" during mutation runs)
 ### How Zombie Detection Works
 
 From DESIGN.md (lines 283-309):
@@ -683,7 +681,7 @@ Mutflow provides the zombie detection but with less granular detail than a full 
 | Q3: Runtime Registry | Compile-once meta-mutant with global session | `MutationRegistry.check()` discovers points at runtime |
 | Q4: Semantic Mutations | **No extension point** | Static IR variants only; no semantic/context-aware support |
 | Q5: Parallel Execution | Synchronized lock serializes mutations | `synchronized(lock)` in `MutationRegistry.withSession()` |
-| Q6: Zombie Detection | Aggregate verdict only | `MutationResult.Survived` vs `Killed(testName)` |
+| Q6: Zombie Detection | Full per-test-per-mutation matrix (via fork) | `Killed(testNames: Set<String>)` + `testKillerMatrix` in JSON |
 
 ---
 

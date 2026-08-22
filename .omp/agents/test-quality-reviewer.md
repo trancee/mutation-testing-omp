@@ -33,7 +33,7 @@ Given a Kotlin project path and optional test target class names, coordinate the
 - mutflow's global synchronized lock serializes mutation runs — parallel executors will block-and-wait on the lock
 - mutflow's JUnit extension runs baseline (run 0) then mutation runs (run 1+) internally
 - One executor per test class (not per mutation)
-- mutflow reports `Killed(testName)` (first killer only), `Survived` (zombie mutation), `TimedOut`
+- mutflow reports `Killed(testNames: Set<String>)` (all killers via fork), `Survived` (zombie mutation), `TimedOut`
 
 ## Output format
 

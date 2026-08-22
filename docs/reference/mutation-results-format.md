@@ -48,7 +48,7 @@ Name of the first test that caught the mutation (JUnit display name). `null` if 
 
 Array of ALL test display names that caught the mutation. `null` if the mutation survived. The mutflow fork records every test that fails during a mutation run, not just the first.
 
-**Example:**
+**Example** (from the `Calculator` sample after adding `validateInput`):
 
 ```json
 {
@@ -56,23 +56,24 @@ Array of ALL test display names that caught the mutation. `null` if the mutation
   "mutationScore": 1.0,
   "qualityBand": "Excellent",
   "confidence": "Medium",
-  "totalMutations": 27,
-  "killed": 27,
+  "totalMutations": 31,
+  "killed": 31,
   "survived": 0,
   "timedOut": 0,
-  "testMethods": ["testAdd()", "testGreet()", "testHasDiscount()"],
+  "testMethods": ["testIsPositive()", "testIsPositiveBoundary()", "testPositiveNumbers()", ...],
   "testKillerMatrix": {
-    "testHasDiscount()": ["Calculator.kt:38", "Calculator.kt:42"],
-    "testAdd()": ["Calculator.kt:12", "Calculator.kt:15"]
+    "testIsPositive()": ["Calculator.kt:24", "Calculator.kt:24", "Calculator.kt:24", "Calculator.kt:24"],
+    "testIsPositiveBoundary()": ["Calculator.kt:24", "Calculator.kt:24", "Calculator.kt:24", "Calculator.kt:24"],
+    "testValidateInput()": ["Calculator.kt:52", "Calculator.kt:52", "Calculator.kt:52", "Calculator.kt:52"]
   },
   "mutations": [
     {
-      "sourceLocation": "Calculator.kt:38",
-      "originalOperator": ">=",
-      "variantOperator": ">",
+      "sourceLocation": "Calculator.kt:24",
+      "originalOperator": ">",
+      "variantOperator": ">=",
       "result": "Killed",
-      "killedByTest": "testHasDiscount()",
-      "killedByTests": ["testHasDiscount()"]
+      "killedByTest": "testIsPositive()",
+      "killedByTests": ["testIsPositive()", "testIsPositiveBoundary()", "testPositiveNumbers()"]
     }
   ]
 }

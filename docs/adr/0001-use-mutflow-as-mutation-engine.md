@@ -27,7 +27,7 @@ Use **mutflow** as the mutation engine.
 - **Kotlin-first**: mutflow is a native Kotlin compiler plugin — no Java interoperability layer needed
 - **JUnit 6 native**: `@MutFlowTest` + `MutFlow.underTest { }` API is idiomatic Kotlin
 - **Compile-once meta-mutant**: All mutations compiled into one build, runtime selects one per run. This eliminates the need for per-mutation git worktrees (Scott-CC's approach), simplifying the orchestration layer
-- **Operator coverage**: mutflow's catalog covers 4 of 5 Scott-CC mutation strategies (boundary, return values, boolean logic, arithmetic). Exception type mutations are not supported (deferred to v2)
+- **Operator coverage**: mutflow's catalog covers 5 of 5 Scott-CC mutation strategies (boundary, return values, boolean logic, arithmetic, exception types). Exception type support added via `ExceptionTypeSwapOperator` in the fork (PR #16, pending upstream)
 - **Active maintenance**: mutflow is actively developed with Kotlin 2.4.x support
 
 ## Consequences
@@ -36,12 +36,12 @@ Use **mutflow** as the mutation engine.
 - No git worktree management — mutflow handles isolation via compile-once
 - Simpler orchestration: one executor per test class, not per mutation
 - Fast iteration: single compilation covers all mutations
+- Full per-test-per-mutation zombie detection: the fork tracks all tests that kill each mutation (`Killed(testNames: Set<String>)`), enabling precise zombie candidate identification via `testKillerMatrix`
 
 ### Negative
-- **JVM-only**: mutflow checks for `org.jetbrains.kotlin.jvm` plugin only — no KMP/JS/Native support. KMP expansion requires extending the Gradle plugin
-- **No LLM-guided mutations**: All operators are predefined and static. LLM serves as targeting specialist (suppression annotations), not as a mutation generator
-- **Global synchronized lock**: `MutationRegistry.withSession()` uses `synchronized(lock)` — only one mutation session active at a time, even across test classes
-- **Limited zombie detection**: Only `Killed(testName)` (first killer) is tracked per mutation — no per-test-per-mutation matrix
+- JVM-only: mutflow checks for `org.jetbrains.kotlin.jvm` plugin only — no KMP/JS/Native support. KMP expansion requires extending the Gradle plugin
+- No LLM-guided mutations: all operators are predefined and static. LLM serves as targeting specialist (suppression annotations), not as a mutation generator
+- Global synchronized lock: `MutationRegistry.withSession()` uses `synchronized(lock)` — only one mutation session active at a time, even across test classes
 
 ## Alternatives considered
 

@@ -28,12 +28,14 @@ Given the project path, results from test-executor agents (stdout, JUnit XML, mu
    - Low: <10 mutations
    - Medium: 10-50 mutations
    - High: 50+ mutations
-5. **Zombie test detection**: Use the full `testKillerMatrix` from the JSON. Cross-reference JUnit XML test method names against `testKillerMatrix` keys. Tests that appear in `testMethods` but have NO entry (or empty entry) in `testKillerMatrix` are zombie candidates — they executed during mutation runs but never killed any mutation. Flag with confidence based on whether the test exercises mutated source lines (parse test source to check if the test method's assertions cover the same classes/lines as mutation points).
+5. **Zombie test detection**: Use the `testKillerMatrix` from the JSON. This maps each test name to the mutation source locations it killed.
+   - Find tests in `testMethods` that have no entry in `testKillerMatrix`. These tests ran during mutation runs but never killed any mutation. They are zombie candidates.
+   - Raise confidence for candidates that also don't appear in any `killedByTests` array across all mutations.
+   - Lower confidence for candidates that the test source suggests should exercise mutated code but didn't fail. Parse the test source to check whether the test method's assertions reference the same classes and lines as mutation points.
 
 ## Known limitations
 
-- mutflow now tracks ALL tests that kill each mutation (via `killedByTests` array in the JSON). The `testKillerMatrix` provides a full per-test-per-mutation mapping. Zombie detection is precise — tests that executed during mutation runs but never killed any mutation are flagged as candidates.
-- Display name normalization: JUnit XML `name` attributes give method names (e.g., `testValidateInput`), while JUnit 5 `context.displayName` may add `()` suffix (e.g., `testValidateInput()`). Cross-reference uses normalized matching (strip trailing `()`).
+- Display name normalization: JUnit XML `name` attributes give method names (e.g., `testValidateInput`), while JUnit 5 `context.displayName` may add `()` suffix (e.g., `testValidateInput()`). Normalize by stripping the trailing `()`.
 - Surviving mutations still require manual investigation to determine if the mutation is genuinely untested or if the test is over-mocked.
 
 ## Output format

@@ -31,7 +31,7 @@ Given a Kotlin project path and a test class name (annotated with `@MutFlowTest`
 
 - During mutation runs, mutflow's JUnit extension swallows test failures (`TestExecutionExceptionHandler` catches and doesn't rethrow)
 - From JUnit's perspective, ALL tests "pass" during mutation runs — look at mutflow's console output, not JUnit XML, for mutation verdicts
-- `MutationResult.Killed(testName)` captures only the FIRST test that failed per mutation
+- `MutationResult.Killed(testNames: Set<String>)` captures ALL tests that failed per mutation (via the fork)
 - `MutationResult.Survived` means all tests passed — the mutation was not caught
 - `MutationResult.TimedOut` means an infinite-loop mutation was detected
 

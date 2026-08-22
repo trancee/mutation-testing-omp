@@ -44,9 +44,9 @@ Reaches from here when: there exists an `/mutation-test` skill in OMP that dispa
 - **Compile-once meta-mutant**: All mutations injected as IR branches with `MutationRegistry.check()` calls at compile time; runtime selects one per run
 - **Static operator catalog only**: 5 call operators, 2 return operators, 1 function body, 1 when operator — no LLM-guided extension point
 - **Serialized mutation runs**: `synchronized(lock)` in `MutationRegistry.withSession()` — only one mutation session active at a time
-- **Zombie detection**: `MutationResult.Killed(testName)` captures first killer per mutation; `Survived` for zombies; NO per-test-per-mutation matrix
+- **Zombie detection**: `MutationResult.Killed(testNames: Set<String>)` captures ALL tests that kill each mutation (via the fork); `Survived` for zombie mutations; `testKillerMatrix` provides full per-test-per-mutation mapping
 - **JUnit 6 extension**: `@MutFlowTest` + `MutFlowExtension` uses `ClassTemplateInvocationContextProvider` to run baseline (run 0) then one mutation per run (run 1+)
-- **Implication**: mutflow's architecture replaces Scott-CC's per-mutant git worktrees — no git worktree needed, but no per-test-per-mutation granularity either
+- **Implication**: mutflow's compile-once approach replaces Scott-CC's per-mutant git worktrees — no git worktree needed, with full per-test-per-mutation zombie detection via the fork
 
 ### D1 resolved — Agent structure (grilling 2026-08-22)
 - **5 separate agent files** in `.omp/agents/`: test-quality-reviewer (orchestrator), test-saboteur, test-executor, test-auditor, test-refactor-specialist
