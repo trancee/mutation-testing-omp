@@ -1,0 +1,5 @@
+interface:
+  display_name: "Mutation Test"
+  short_description: "Run mutflow-powered mutation testing on Kotlin projects"
+policy:
+  allow_implicit_invocation: false
