@@ -99,4 +99,28 @@ class CalculatorTest {
             "validateInput(-1) should throw IllegalArgumentException")
     }
 
+    /**
+     * Exercises isPositive through a different path — overlaps with testIsPositive
+     * on line 24 mutations (>→>=, 0→1, 0→-1), creating multi-killer scenarios
+     * that verify the fork's full per-test-per-mutation tracking.
+     */
+    @Test
+    fun testIsPositiveBoundary() {
+        assertTrue(MutFlow.underTest { calc.isPositive(5) })    // kills >→>= via 0
+        assertFalse(MutFlow.underTest { calc.isPositive(0) })   // kills >→>= via 0
+        assertFalse(MutFlow.underTest { calc.isPositive(-3) }) // kills >→<
+        assertTrue(MutFlow.underTest { calc.isPositive(1) })    // kills 0→1
+    }
+
+    /**
+     * Exercises isPositive indirectly — also overlaps with testIsPositive
+     * on line 24, further verifying multi-killer tracking.
+     */
+    @Test
+    fun testPositiveNumbers() {
+        assertTrue(MutFlow.underTest { calc.isPositive(10) })
+        assertFalse(MutFlow.underTest { calc.isPositive(0) })
+        assertTrue(MutFlow.underTest { calc.isPositive(1) })
+    }
+
 }
