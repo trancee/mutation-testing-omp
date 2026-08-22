@@ -42,30 +42,7 @@ A test that uses excessive mocking (`mockk()`, `mock()`), potentially masking re
 
 ## Data contracts
 
-### Executor → Auditor (mutation-results.json)
-```json
-{
-  "mutationScore": 0.6,
-  "qualityBand": "Fair",
-  "totalMutations": 20,
-  "killed": 12,
-  "survived": 5,
-  "timedOut": 3,
-  "testMethods": ["testA", "testB"],
-  "mutations": [{"sourceLocation": "Calculator.kt:10", "originalOperator": ">", "variantOperator": ">=", "result": "Killed", "killedByTest": "testIsPositive"}],
-  "zombieCandidates": ["testMultiply", ...]
-}
-```
-
-### Quality bands
-| Band | Score | Confidence |
-|------|-------|------------|
-| Excellent | >80% | based on mutation count |
-| Good | 60-80% | |
-| Fair | 30-60% | |
-| Poor | <30% | |
-
-Confidence: <10 mutations = Low, 10-50 = Medium, 50+ = High
+The `mutationResults` Gradle task outputs `mutation-results.json`. The format and quality bands are documented in the [mutation results reference](../reference/mutation-results-format.md).
 
 ## Decisions deferred to v2
 

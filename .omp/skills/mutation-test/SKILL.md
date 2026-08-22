@@ -32,10 +32,13 @@ Runs a mutation-testing analysis on a Kotlin (JVM-first) project using mutflow a
 
 ### mutflow architecture notes
 
-- mutflow is **JVM-only** — no JS/Native/Android support in v1
-- mutflow uses **compile-once meta-mutant**: all mutations injected at compile time, one active per run
-- mutflow's **global synchronized lock** serializes mutation runs — parallel executors block-and-wait
-- mutflow reports **aggregate verdicts per mutation** (Killed with first killer test, Survived, TimedOut) — not per-test-per-mutation matrices
+Key mutflow constraints that affect orchestration:
+- JVM-only — no JS/Native/Android support in v1
+- Compile-once meta-mutant — all mutations injected at compile time, one active per run
+- Global synchronized lock — serializes mutation runs; parallel executors block-and-wait
+- Aggregate verdicts per mutation (first killer only) — not per-test-per-mutation matrices
+
+For the full explanation of how mutflow's compile-once meta-mutant architecture works and why it matters for the OMP agent system, see [About mutflow's architecture](../../../docs/explanation/mutflow-architecture.md).
 
 ### Issue tracking
 
