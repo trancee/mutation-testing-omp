@@ -11,12 +11,24 @@ Runs a mutation-testing analysis on a Kotlin (JVM-first) project using mutflow a
 
 ```
 /mutation-test [project path] [--targets <test-class-pattern>]
+/mutation-test setup [project path] [--kmp]
 ```
 
 - `project path`: Path to the Kotlin project root (default: current directory)
 - `--targets`: Optional glob pattern for test classes to include (default: all `@MutFlowTest` classes)
+- `--kmp`: (setup only) Use Kotlin Multiplatform project setup (mutflow targets JVM source sets only)
 
-### What happens
+### Setup subcommand
+
+`/mutation-test setup [project path] [--kmp]` bootstraps the entire system into a new project:
+
+1. **`.omp/` files copied**: agents, skills, `mutation-results.gradle.kts` copied to `project-path/.omp/`
+2. **`settings.gradle.kts`**: `pluginManagement` block added with `mavenCentral()` + `gradlePluginPortal()`
+3. **`build.gradle.kts`**: mutflow plugin, JUnit 6 dependencies, `apply(from = ...)` for mutation-results added
+4. **`test-saboteur`** (via `task`) annotates business-logic classes with `@MutationTarget`, test classes with `@MutFlowTest`, and wraps existing assertions in `MutFlow.underTest { }`
+5. **Verification**: `./gradlew mutationResults` compiles and runs
+
+### What happens (full mutation test run)
 
 1. **`test-quality-reviewer`** (orchestrator) receives the task and coordinates the pipeline
 2. **`test-saboteur`** analyzes source code, adds `@MutationTarget` to business-logic classes, `@MutFlowTest` to test classes, and suppression comments to framework noise
@@ -27,12 +39,13 @@ Runs a mutation-testing analysis on a Kotlin (JVM-first) project using mutflow a
 ### Prerequisites
 
 - Kotlin JVM project with Gradle
-- mutflow plugin configured (`io.github.anschnapp.mutflow` in `build.gradle.kts`)
-- Test classes annotated with `@MutFlowTest`
+- Java 21+, Gradle 9.x+, Kotlin 2.4.x
+- For fresh projects, use `/mutation-test setup` first
 
 ### mutflow architecture notes
 
 Key mutflow constraints that affect orchestration:
+
 - JVM-only — no JS/Native/Android support in v1
 - Compile-once meta-mutant — all mutations injected at compile time, one active per run
 - Global synchronized lock — serializes mutation runs; parallel executors block-and-wait
@@ -46,8 +59,7 @@ Decisions and issues tracked in `.scratch/mutation-testing-omp/`. See `docs/agen
 
 ### Dispatch
 
-This skill is a thin wrapper — it spawns `test-quality-reviewer` via the `task` tool:
+This skill spawns subagents via the `task` tool:
 
-```
-task with agent: "test-quality-reviewer", task: "Run mutation testing on [project path] with targets [targets]"
-```
+- **Setup**: `task with agent: "test-quality-reviewer", task: "Bootstrap mutation testing system into [project path] with kmp=[--kmp]"` — the orchestrator runs the bootstrap script, then invokes test-saboteur to annotate existing tests.
+- **Mutation test**: `task with agent: "test-quality-reviewer", task: "Run mutation testing on [project path] with targets [targets]"`
