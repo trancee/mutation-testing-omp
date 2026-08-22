@@ -38,7 +38,7 @@ A test that uses excessive mocking (`mockk()`, `mock()`), potentially masking re
 | Return values | BooleanReturnOperator + NullableReturnOperator | Full |
 | Boolean logic | BooleanInversionOperator + EqualitySwapOperator + BooleanLogicOperator | Full |
 | Arithmetic | ArithmeticOperator | Full |
-| Exception types | None | **None** (open gap, deferred to v2) |
+| Exception types | ExceptionTypeSwapOperator (pending upstream) | **In development** (PR [#16](https://github.com/anschnapp/mutflow/pull/16)) |
 
 ## Data contracts
 
@@ -46,7 +46,7 @@ The `mutationResults` Gradle task outputs `mutation-results.json`. The format an
 
 ## Decisions deferred to v2
 
-- Exception type mutations (no mutflow operator)
+- Exception type mutations (PR [#16](https://github.com/anschnapp/mutflow/pull/16) — pending upstream merge)
 - Full per-test-per-mutation zombie detection matrix (mutflow tracks only first killer per mutation)
 - KMP/JS/Native target support (mutflow is JVM-only)
 
