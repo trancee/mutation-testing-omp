@@ -50,13 +50,12 @@ echo "Configuring settings.gradle.kts..."
 
 settings_file="$PROJECT_PATH/settings.gradle.kts"
 if [[ ! -f "$settings_file" ]]; then
-    root_name=""
     if [[ "$IS_KMP" == "1" ]]; then
-        root_name='rootProject.name = "my-kmp-project"'
+        root_name='rootProject.name = "my-kmp-app"'
     else
         root_name='rootProject.name = "my-jvm-project"'
     fi
-    cat > "$settings_file" << 'EOF'
+    cat > "$settings_file" << EOF
 pluginManagement {
     repositories {
         mavenCentral()
@@ -64,15 +63,15 @@ pluginManagement {
     }
 }
 
+$root_name
 EOF
-    echo "$root_name" >> "$settings_file"
     echo "  Created settings.gradle.kts with pluginManagement"
 else
     if grep -q "pluginManagement" "$settings_file"; then
         echo "  pluginManagement already present — skipping"
     else
         tmp=$(mktemp)
-        cat << 'EOF'
+        cat > "$tmp" << 'EOF'
 pluginManagement {
     repositories {
         mavenCentral()
@@ -99,27 +98,14 @@ fi
 
 cp "$build_file" "$build_file.bak"
 
-needs_plugin=""
-needs_deps=""
-needs_apply=""
-
+# --- Add mutflow plugin ---
 if ! grep -q 'io.github.anschnapp.mutflow' "$build_file"; then
-    needs_plugin="yes"
-fi
-if ! grep -q 'junit-jupiter-api' "$build_file"; then
-    needs_deps="yes"
-fi
-if ! grep -q 'mutation-results.gradle.kts' "$build_file"; then
-    needs_apply="yes"
-fi
-
-if [[ -n "$needs_plugin" ]]; then
-    # Insert mutflow plugin into the plugins block
     if grep -q '^plugins {' "$build_file"; then
-        sed -i.bak2 '/^plugins {/a\
+        sed -i.bak '/^plugins {/a\
     id("io.github.anschnapp.mutflow") version "1.0.5"' "$build_file"
+        rm -f "$build_file.bak"
+        echo "  Added mutflow plugin"
     else
-        # No plugins block — create one
         {
             echo 'plugins {'
             echo '    id("io.github.anschnapp.mutflow") version "1.0.5"'
@@ -128,44 +114,36 @@ if [[ -n "$needs_plugin" ]]; then
             cat "$build_file"
         } > "$build_file.tmp"
         mv "$build_file.tmp" "$build_file"
+        echo "  Added plugins block with mutflow"
     fi
-    echo "  Added mutflow plugin"
 fi
 
-if [[ -n "$needs_deps" ]]; then
-    if grep -q '^dependencies {' "$build_file"; then
-        sed -i.bak3 '/^dependencies {/a\
-    testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.3")\
-    testImplementation("org.junit.platform:junit-platform-launcher:6.1.3")\
-    testImplementation("io.github.anschnapp.mutflow:mutflow-junit6:1.0.5")' "$build_file"
-    else
-        # Append dependencies block
+# --- Apply mutation-results script ---
+if ! grep -q 'mutation-results.gradle.kts' "$build_file"; then
+    if grep -q '^}$' "$build_file"; then
+        first_close=$(grep -n '^}$' "$build_file" | head -1 | cut -d: -f1)
+        sed -i.bak "${first_close}a\\
+\\
+apply(from = rootProject.file(\".omp/mutation-results.gradle.kts\"))" "$build_file"
+        rm -f "$build_file.bak"
+        echo "  Applied mutation-results.gradle.kts"
+    fi
+fi
+
+# --- Add dependencies + mutflow config ---
+if [[ "$IS_KMP" == "1" ]]; then
+    # For KMP, add jvmTestImplementation dependencies + mutflow block
+    if ! grep -q 'junit-jupiter-api' "$build_file"; then
         cat >> "$build_file" << 'EOF'
 
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.3")
-    testImplementation("org.junit.platform:junit-platform-launcher:6.1.3")
-    testImplementation("io.github.anschnapp.mutflow:mutflow-junit6:1.0.5")
+    jvmTestImplementation("org.junit.jupiter:junit-jupiter-api:6.1.3")
+    jvmTestImplementation("org.junit.platform:junit-platform-launcher:6.1.3")
+    jvmTestImplementation("io.github.anschnapp.mutflow:mutflow-junit6:1.0.5")
 }
 EOF
+        echo "  Added KMP JVM test dependencies"
     fi
-    echo "  Added JUnit 6 + mutflow-junit6 dependencies"
-fi
-
-if [[ -n "$needs_apply" ]]; then
-    # Add apply after the first top-level closing brace of plugins block
-    # We use awk to insert after the first standalone '}'
-    if grep -q '^}$' "$build_file"; then
-        first_close=$(grep -n '^}$' "$build_file" | head -1 | cut -d: -f1)
-        sed -i.bak4 "${first_close}a\\
-\\
-apply(from = rootProject.file(\".omp/mutation-results.gradle.kts\"))" "$build_file"
-    fi
-    echo "  Applied mutation-results.gradle.kts"
-fi
-
-if [[ "$IS_KMP" == "1" ]]; then
-    # For KMP, ensure mutflow targets jvmTest — mutflow plugin applies per-JVM-source-set
     if ! grep -q '^mutflow {' "$build_file"; then
         cat >> "$build_file" << 'EOF'
 
@@ -174,9 +152,29 @@ mutflow {
     targets = listOf("jvmTest")
 }
 EOF
-        echo "  Added mutflow KMP configuration (jvmTest targets)"
+        echo "  Added mutflow KMP configuration (jvmTest)"
     fi
 else
+    # For JVM, use testImplementation
+    if ! grep -q 'junit-jupiter-api' "$build_file"; then
+        if grep -q '^dependencies {' "$build_file"; then
+            sed -i.bak '/^dependencies {/a\
+    testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.3")\
+    testImplementation("org.junit.platform:junit-platform-launcher:6.1.3")\
+    testImplementation("io.github.anschnapp.mutflow:mutflow-junit6:1.0.5")' "$build_file"
+            rm -f "$build_file.bak"
+        else
+            cat >> "$build_file" << 'EOF'
+
+dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.3")
+    testImplementation("org.junit.platform:junit-platform-launcher:6.1.3")
+    testImplementation("io.github.anschnapp.mutflow:mutflow-junit6:1.0.5")
+}
+EOF
+        fi
+        echo "  Added JUnit 6 + mutflow-junit6 dependencies"
+    fi
     if ! grep -q '^mutflow {' "$build_file"; then
         cat >> "$build_file" << 'EOF'
 
@@ -188,8 +186,7 @@ EOF
     fi
 fi
 
-# Clean up temp files
-rm -f "$build_file.bak" "$build_file.bak2" "$build_file.bak3" "$build_file.bak4"
+rm -f "$build_file.bak"
 
 # --- Step 4: Summary ---
 echo ""
