@@ -1,0 +1,77 @@
+package example
+
+import io.github.anschnapp.mutflow.MutFlow
+import io.github.anschnapp.mutflow.junit.MutFlowTest
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.*
+
+/**
+ * Tests for [Calculator] — annotated with @MutFlowTest so mutflow's
+ * JUnit 6 extension runs baseline (run 0) + one mutation per run (run 1+).
+ *
+ * Each test wraps business logic calls in MutFlow.underTest { } so
+ * mutflow can activate mutations during mutation runs.
+ */
+@MutFlowTest
+class CalculatorTest {
+
+    private val calc = Calculator()
+
+    @Test
+    fun testIsPositive() {
+        assertTrue(MutFlow.underTest { calc.isPositive(5) })
+        assertFalse(MutFlow.underTest { calc.isPositive(-1) })
+        // Boundary: 0 is NOT positive
+        assertFalse(MutFlow.underTest { calc.isPositive(0) })
+    }
+
+    @Test
+    fun testIsInRange() {
+        assertTrue(MutFlow.underTest { calc.isInRange(5, 1, 10) })
+        assertFalse(MutFlow.underTest { calc.isInRange(0, 1, 10) })
+        assertFalse(MutFlow.underTest { calc.isInRange(11, 1, 10) })
+        // Boundary: exact bounds
+        assertTrue(MutFlow.underTest { calc.isInRange(1, 1, 10) })
+        assertTrue(MutFlow.underTest { calc.isInRange(10, 1, 10) })
+    }
+
+    @Test
+    fun testAdd() {
+        assertEquals(7, MutFlow.underTest { calc.add(3, 4) })
+        assertEquals(0, MutFlow.underTest { calc.add(-5, 5) })
+        assertEquals(-8, MutFlow.underTest { calc.add(-3, -5) })
+    }
+
+    @Test
+    fun testMultiply() {
+        assertEquals(12, MutFlow.underTest { calc.multiply(3, 4) })
+        assertEquals(0, MutFlow.underTest { calc.multiply(0, 5) })
+        assertEquals(-15, MutFlow.underTest { calc.multiply(-3, 5) })
+    }
+
+    @Test
+    fun testIsValid() {
+        assertTrue(MutFlow.underTest { calc.isValid(50) })
+        assertFalse(MutFlow.underTest { calc.isValid(-1) })
+        assertFalse(MutFlow.underTest { calc.isValid(150) })
+    }
+
+    @Test
+    fun testHasDiscount() {
+        assertTrue(MutFlow.underTest { calc.hasDiscount(isMember = true, total = 0.0) })
+        assertFalse(MutFlow.underTest { calc.hasDiscount(isMember = false, total = 10.0) })
+        assertTrue(MutFlow.underTest { calc.hasDiscount(isMember = false, total = 50.0) })
+    }
+
+    @Test
+    fun testGreet() {
+        assertEquals("Hello, World", MutFlow.underTest { calc.greet("World") })
+        assertEquals("Hello, stranger", MutFlow.underTest { calc.greet(null) })
+    }
+
+    @Test
+    fun testIsEmpty() {
+        assertTrue(MutFlow.underTest { calc.isEmpty(0) })
+        assertFalse(MutFlow.underTest { calc.isEmpty(5) })
+    }
+}

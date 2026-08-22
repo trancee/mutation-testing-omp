@@ -194,7 +194,7 @@ open class MutationResultsTask : DefaultTask() {
         val lines = stdout.lines().filter { it.isNotBlank() }
         var i = 0
         while (i < lines.size) {
-            val line = lines[i].trim()
+            val line = lines[i].replace("║", "").trim()
             val matcher = mutationPattern.matcher(line)
             if (matcher.matches()) {
                 val statusIcon = matcher.group(1)
