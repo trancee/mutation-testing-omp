@@ -17,7 +17,12 @@ plugins {
     id("io.github.anschnapp.mutflow") version "1.0.5"
 }
 apply(from = rootProject.file(".omp/mutation-results.gradle.kts"))
-```
+
+> **Note**: mutflow is published to Maven Central only (not the Gradle Plugin Portal). Add to `settings.gradle.kts`:
+> ```kotlin
+> pluginManagement { repositories { mavenCentral(); gradlePluginPortal() } }
+> ```
+> Also add `testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.3")` — mutflow-junit6 provides the engine at runtime only.
 
 5. **Annotate source**: Add `@MutationTarget` to business-logic classes and `@MutFlowTest` to test classes (see [tutorial](docs/tutorials/first-mutation-test.md))
 6. **Run**: Execute `/mutation-test <project-path>` — the orchestrator dispatches saboteur → executor → auditor → refactorer
