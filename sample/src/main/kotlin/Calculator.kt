@@ -10,8 +10,9 @@ import io.github.anschnapp.mutflow.MutationTarget
  * - Boolean logic: isValid (&& short-circuit), hasDiscount (||)
  * - Arithmetic: add (+), multiply (*)
  * - Return values: BooleanReturnOperator (return true/false in Boolean methods)
- *
- * Exception type mutations are NOT covered — mutflow has no operator for them.
+ * - Exception type mutations are available via `ExceptionTypeSwapOperator`
+ *   (upstream [PR #16](https://github.com/anschnapp/mutflow/pull/16))
+ * - Exception types: `validateInput` throws `IllegalArgumentException`
  *
  * NOTE: Logging and debug checks are annotated with `@SuppressMutations` or
  * `// mutflow:ignore` to avoid wasting mutation runs on non-business code.
@@ -45,6 +46,12 @@ class Calculator {
 
     /** Returns true if count is zero (demonstrates VoidFunctionBodyOperator if void, BooleanReturn here). */
     fun isEmpty(count: Int): Boolean = count == 0  // Equality swap: == ↔ !=
+
+    /** Validates that value is non-negative, throwing `IllegalArgumentException` if negative. */
+    fun validateInput(value: Int): Int {
+        if (value < 0) throw IllegalArgumentException("value must be non-negative, got: $value")
+        return value
+    }
 
     // Framework / non-business code — suppressed from mutation testing
     private fun log(message: String) {  // mutflow:ignore logging is not business logic

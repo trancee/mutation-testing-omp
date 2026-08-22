@@ -78,4 +78,25 @@ class CalculatorTest {
         assertTrue(MutFlow.underTest { calc.isEmpty(0) })
         assertFalse(MutFlow.underTest { calc.isEmpty(5) })
     }
+
+    /**
+     * Tests validateInput — throws `IllegalArgumentException` for negative values.
+     * Once ExceptionTypeSwapOperator merges upstream, mutflow will swap
+     * IllegalArgumentException → IllegalStateException on this test.
+     */
+    @Test
+    fun testValidateInput() {
+        assertEquals(5, MutFlow.underTest { calc.validateInput(5) })
+        assertEquals(0, MutFlow.underTest { calc.validateInput(0) })
+
+        val exception = try {
+            MutFlow.underTest { calc.validateInput(-1) }
+            "no-exception"
+        } catch (e: IllegalArgumentException) {
+            "IllegalArgumentException"
+        }
+        assertEquals("IllegalArgumentException", exception,
+            "validateInput(-1) should throw IllegalArgumentException")
+    }
+
 }
