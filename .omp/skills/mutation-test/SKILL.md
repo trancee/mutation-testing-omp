@@ -51,7 +51,7 @@ Key mutflow constraints that affect orchestration:
 - Global synchronized lock — serializes mutation runs; parallel executors block-and-wait
 - Aggregate verdicts per mutation (first killer only) — not per-test-per-mutation matrices
 
-For the full explanation of how mutflow's compile-once meta-mutant architecture works and why it matters for the OMP agent system, see [About mutflow's architecture](../../../docs/explanation/mutflow-architecture.md).
+For the full explanation of how mutflow's compile-once meta-mutant architecture works and why it matters for the OMP agent system, see [About mutflow's architecture](../../../docs/explanation/mutflow-architecture.md). For the 5-agent system and how each agent contributes, see [About the OMP 5-agent system](../../../docs/explanation/agent-system.md).
 
 ### Issue tracking
 
