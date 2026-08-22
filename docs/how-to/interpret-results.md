@@ -51,13 +51,12 @@ Each survived mutation shows the source location and the operator change:
 
 - File: `Calculator.kt`, line 35
 - Operator: `>` was mutated to `>=`
-- This is a relational comparison mutation
 
 ## Step 4: Fix surviving mutations
 
-For each surviving mutation, add a boundary test that distinguishes the original from the mutant.
+For each surviving mutation, add a boundary test that distinguishes the original from the mutant. For a complete workflow including common patterns per operator type and the trap feature, see [How to fix surviving mutations](fix-surviving-mutations.md).
+(Skip ahead if you want the full workflow with patterns per operator type — this guide covers the essentials.)
 
-**Example**: `> → >=` on line 35 (`x > 0`):
 
 ```kotlin
 // Original: x > 0,  mutant: x >= 0

@@ -4,6 +4,24 @@ A 5-agent mutation testing system for Kotlin (JVM-first) projects, powered by [m
 
 This system ports [Scott-CC's](https://github.com/Scott-CC/mutation-testing-plugin) multi-agent orchestration and LLM-guided semantic mutations to OMP, adapting from Scott-CC's per-mutant git worktree model to mutflow's compile-once meta-mutant architecture.
 
+## Setup
+
+1. **Prerequisites**: Java 21+, Gradle 9.x+, Kotlin 2.4.x
+2. **Add agents**: Copy `.omp/agents/` into your project — OMP auto-discovers agents by their `name` field in frontmatter
+3. **Add skill**: Copy `.omp/skills/mutation-test/` into your project — provides the `/mutation-test` command
+4. **Configure mutflow**: Add the plugin to your `build.gradle.kts`:
+
+```kotlin
+plugins {
+    kotlin("jvm") version "2.4.0"
+    id("io.github.anschnapp.mutflow") version "1.0.5"
+}
+apply(from = rootProject.file(".omp/mutation-results.gradle.kts"))
+```
+
+5. **Annotate source**: Add `@MutationTarget` to business-logic classes and `@MutFlowTest` to test classes (see [tutorial](docs/tutorials/first-mutation-test.md))
+6. **Run**: Execute `/mutation-test <project-path>` — the orchestrator dispatches saboteur → executor → auditor → refactorer
+
 ## Quick start
 
 Run mutation testing on any Kotlin JVM project:
@@ -19,7 +37,8 @@ See the [tutorial](docs/tutorials/first-mutation-test.md) for a step-by-step gui
 | Need | Doc |
 |------|-----|
 | Get started learning | [Tutorial: Your first mutation test](docs/tutorials/first-mutation-test.md) |
-| Fix surviving mutations | [How-to: Interpret mutation testing results](docs/how-to/interpret-results.md) |
+| Interpret test results | [How-to: Interpret mutation testing results](docs/how-to/interpret-results.md) |
+| Fix surviving mutations | [How-to: Fix surviving mutations](docs/how-to/fix-surviving-mutations.md) |
 | Understand mutflow | [About mutflow's architecture](docs/explanation/mutflow-architecture.md) |
 | JSON output format | [Reference: mutation-results.json](docs/reference/mutation-results-format.md) |
 | Domain concepts | [CONTEXT.md](CONTEXT.md) |
