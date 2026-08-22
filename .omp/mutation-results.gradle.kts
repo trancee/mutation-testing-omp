@@ -106,11 +106,26 @@ open class MutationResultsTask : DefaultTask() {
 
         val sortedTestMethods = testMethods.sorted()
         val mutationsJson = mutations.joinToString(",\n") { m ->
-            val killedBy = m["killedByTest"]
-            val killedByStr = if (killedBy != null) "\"$killedBy\"" else "null"
-            """{"sourceLocation":"${m["sourceLocation"]}","originalOperator":"${m["originalOperator"]}","variantOperator":"${m["variantOperator"]}","result":"${m["result"]}","killedByTest":$killedByStr}"""
+            val killedByTests = m["killedByTests"] as List<String>
+            val killedByTestsJson = killedByTests.joinToString(",") { "\"$it\"" }
+            val firstKiller = if (killedByTests.isNotEmpty()) "\"${killedByTests.first()}\"" else "null"
+            """{"sourceLocation":"${m["sourceLocation"]}","originalOperator":"${m["originalOperator"]}","variantOperator":"${m["variantOperator"]}","result":"${m["result"]}","killedByTest":$firstKiller,"killedByTests":[$killedByTestsJson]}"""
         }
         val testMethodsJson = sortedTestMethods.joinToString(",") { "\"$it\"" }
+
+        // Build per-test-per-mutation matrix: testName -> list of mutation sourceLocations it killed
+        val testKillerMatrix = mutableMapOf<String, MutableList<String>>()
+        mutations.forEach { m ->
+            val killedByTests = m["killedByTests"] as List<String>
+            val sourceLocation = m["sourceLocation"].toString()
+            killedByTests.forEach { testName ->
+                testKillerMatrix.getOrPut(testName) { mutableListOf() }.add(sourceLocation)
+            }
+        }
+        val testKillerMatrixJson = testKillerMatrix.entries.joinToString(",") { (test, locations) ->
+            val locsJson = locations.joinToString(",") { "\"$it\"" }
+            "\"$test\":[$locsJson]"
+        }
 
         val json = """
         {
@@ -123,6 +138,7 @@ open class MutationResultsTask : DefaultTask() {
             "survived": $survived,
             "timedOut": $timedOut,
             "testMethods": [$testMethodsJson],
+            "testKillerMatrix": {$testKillerMatrixJson},
             "mutations": [$mutationsJson]
         }
         """.trimIndent()
@@ -138,13 +154,16 @@ open class MutationResultsTask : DefaultTask() {
     /**
      * Parses mutflow's MutationTestingSummary from captured JUnit XML <system-out>.
      *
-     * Output format (from mutflow README):
+     * Output format (mutflow summary with multi-killer support):
      *   ✓ (Calculator.kt:7) > → >=
      *       killed by: isPositive returns false for zero()
+     *       killed by: testAnotherMethod()
      *   ✗ (Calculator.kt:8) >= → >
      *       SURVIVED - no test caught this mutation!
      *   ⏱ (Calculator.kt:12) + → *
      *       TIMED OUT - likely causes an infinite loop
+     *
+     * Multiple "killed by:" lines per mutation are captured (full per-test-per-mutation matrix).
      */
     private fun parseMutflowSummary(stdout: String): List<Map<String, Any?>> {
         val mutations = mutableListOf<Map<String, Any?>>()
@@ -172,14 +191,21 @@ open class MutationResultsTask : DefaultTask() {
                     else -> "Unknown"
                 }
 
-                var killedByTest: String? = null
-                if (result == "Killed" && i + 1 < lines.size) {
-                    val nextLine = lines[i + 1].replace("║", "").trim()
-                    val killedMatcher = killedByPattern.matcher(nextLine)
-                    if (killedMatcher.matches()) {
-                        killedByTest = killedMatcher.group(1).trim()
-                        i++ // skip the killed-by line
+                val killedByTests = mutableListOf<String>()
+                if (result == "Killed") {
+                    // Collect ALL "killed by:" lines that follow (full killer set)
+                    var j = i + 1
+                    while (j < lines.size) {
+                        val nextLine = lines[j].replace("║", "").trim()
+                        val killedMatcher = killedByPattern.matcher(nextLine)
+                        if (killedMatcher.matches()) {
+                            killedByTests.add(killedMatcher.group(1).trim())
+                            j++ // consume the killed-by line
+                        } else {
+                            break // stop at first non-killed-by line
+                        }
                     }
+                    i = j - 1 // advance past all consumed killed-by lines
                 }
 
                 mutations.add(mapOf(
@@ -187,11 +213,12 @@ open class MutationResultsTask : DefaultTask() {
                     "originalOperator" to originalOp,
                     "variantOperator" to variantOp,
                     "result" to result,
-                    "killedByTest" to killedByTest
+                    "killedByTests" to killedByTests
                 ))
             }
             i++
         }
         return mutations
     }
+
 }

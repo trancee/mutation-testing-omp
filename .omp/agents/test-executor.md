@@ -17,7 +17,7 @@ Given a Kotlin project path and a test class name (annotated with `@MutFlowTest`
    - mutflow's JUnit 6 extension handles the multi-run model internally (baseline run 0 + mutation runs 1+)
 2. **Capture output**: Save stdout from the gradle run (contains mutflow's MutationTestingSummary with Killed/Survived/TimedOut per mutation)
 3. **Capture JUnit XML**: Located at `build/test-results/test/TEST-<TestClass>.xml` — contains all test method names (mutflow swallows failures during mutation runs, so all tests appear as "passed")
-4. **Capture mutation results JSON** (if custom Gradle task is configured): Contains `pointId`, `variantIndex`, `result` (Killed/Survived/TimedOut), `killedByTest` per mutation
+4. **Capture mutation results JSON** (if custom Gradle task is configured): Contains `pointId`, `variantIndex`, `result` (Killed/Survived/TimedOut), `killedByTests` (array of ALL tests that caught each mutation) per mutation, plus `testKillerMatrix` (test → mutation source locations)
 5. **Timeout handling**: mutflow's internal 60s timeout per mutation run handles infinite-loop mutations. The OMP task timeout (15 min) is a backstop — if it triggers, report the partial output.
 
 ## Constraints

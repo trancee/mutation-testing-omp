@@ -1,6 +1,6 @@
 plugins {
     kotlin("jvm") version "2.4.0"
-    id("io.github.anschnapp.mutflow") version "1.0.5"
+    id("io.github.anschnapp.mutflow") version "0.1.0-SNAPSHOT"
 }
 
 apply(from = rootProject.file("../.omp/mutation-results.gradle.kts"))
@@ -10,6 +10,7 @@ kotlin {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 dependencies {

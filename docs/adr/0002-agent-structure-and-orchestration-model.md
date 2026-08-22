@@ -59,4 +59,4 @@ Use 5 separate OMP agent files in `.omp/agents/`, orchestrated via a sequential 
 
 - **No namespace needed**: OMP uses the `name` field as the dispatch key — `mutation-testing:` prefix is optional (unlike Scott-CC)
 - **mutflow adaptation**: saboteur configures `@MutFlowTest` (no git worktrees); executor runs `./gradlew test` (JUnit extension handles multi-run); one executor per test class (mutflow's global lock serializes mutations)
-- **Zombie detection limitation**: mutflow only tracks the first killer per mutation — approximate zombie detection via `killedByTest` cross-reference with JUnit XML (full per-test-per-mutation matrix deferred to v2)
+- **Zombie detection**: The mutflow fork tracks ALL tests that kill each mutation (not just the first). The `mutation-results.gradle.kts` task builds a `testKillerMatrix` and the test-auditor uses it for precise zombie candidate identification.

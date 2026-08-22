@@ -18,33 +18,33 @@ Scott-CC detects zombies by comparing per-test outcomes across per-mutation git 
 5. **Survivor output format**: mutflow shows survivors as `MUTANT SURVIVED: (Calculator.kt:8) > → >=`. How to parse these into Scott-CC's zombie test analysis format?
 ## Resolution
 
-### Decisions (from grilling 2026-08-22)
-1. **Approximate zombie detection**: Auditor cross-references JUnit XML (all test method names per class) against mutflow's JSON `killedByTest` values. Tests that NEVER appear as killedByTest for any killed mutation are flagged as zombie candidates. This is imprecise (false positives for tests that don't exercise mutated code) but fast — no extra test runs needed.
-2. **Standard quality bands with mutation-count confidence**: Mutation score = killed / total. Excellent >80%, Good 60-80%, Fair 30-60%, Poor <30%. Confidence: <10 mutations = low, 10-50 = medium, 50+ = high.
+### Decisions
+1. **Full per-test-per-mutation zombie detection**: The mutflow fork's `MutFlowSession.markTestFailed()` now tracks ALL tests that catch each mutation (via `killedByTests: MutableSet<String>`). The `mutation-results.gradle.kts` task builds a `testKillerMatrix` mapping each test display name → list of mutation source locations it killed. Zombie candidates = tests in `testMethods` that have NO entry in `testKillerMatrix`.
+2. **Quality bands with mutation-count confidence**: Mutation score = killed / total. Excellent >80%, Good 60-80%, Fair 30-60%, Poor <30%. Confidence: <10 mutations = low, 10-50 = medium, 50+ = high.
 3. **Over-mocking detection via mock counting**: Parse test source files, count `mockk()`, `mock()`, `spyk()`, `@MockK`, `@Mock` per test method. Flag tests with >3 mocks as over-mocking candidates. LLM (test-refactor-specialist) reviews flagged tests.
 
 ### Answering the 5 ticket questions
 
 | Q# | Answer |
 |---|---|
-| 1 | mutflow does NOT expose per-test-per-mutation outcomes. `markTestFailed()` only records the FIRST killer test per mutation (gated by `if (!testFailedInCurrentRun && activeMutation != null)`). JUnit XML shows all tests as "passed" during mutation runs (failures swallowed). The custom Gradle task (D3 decision) captures JSON with killedByTest + JUnit XML cross-reference for approximation. |
-| 2 | Run model is test-class-level, not per-mutation. All tests in a class execute per mutation run (baseline + N mutation runs). "Evaluated" = all tests in the class for each run. "Unevaluated" = tests that ran but didn't fail (can't distinguish from zombies without per-test re-runs). |
-| 3 | mutflow's partial run detection (executedTestIds check) skips mutation testing when running single tests from IDE. Via OMP, the test-executor runs the full class, so partial detection does NOT trigger. But if an executor is misconfigured to run single tests, mutation testing will be skipped silently. |
+| 1 | mutflow fork now tracks ALL tests that kill each mutation (via `killedByTests: MutableSet<String>` in `markTestFailed`). JUnit XML shows all tests as "passed" during mutation runs (failures swallowed by the extension). The custom Gradle task captures `killedByTests` array + `testKillerMatrix` for full per-test-per-mutation analysis. |
+| 2 | Run model is test-class-level, not per-mutation. All tests in a class execute per mutation run (baseline + N mutation runs). All failing tests per run are tracked (not just the first). "Evaluated" = all tests in the class for each run. "Unevaluated" = tests that never fail and never appear in `testKillerMatrix`. |
+| 3 | mutflow's partial run detection (executedTestIds check) skips mutation testing when running single tests from IDE. Via OMP, the test-executor runs the full class, so partial detection does NOT trigger. |
 | 4 | Kotlin equivalent: MockK's `mockk()` and `spyk()`, Mockito-Kotlin's `mock()` and `mockOrNull()`. Annotations: `@MockK`, `@Mock`. Count per test method, flag >3 as candidates. |
-| 5 | Custom Gradle task (D3 decision) outputs structured JSON instead of parsing console text. No need to parse `MUTANT SURVIVED: ...` — the JSON contains pointId, variantIndex, result, killedByTest directly. |
+| 5 | Custom Gradle task (D3 decision) outputs structured JSON instead of parsing console text. The JSON contains `killedByTests` array, `testKillerMatrix`, plus `pointId`, `variantIndex`, `result`. |
 
 ### Zombie detection data flow
 
-1. **test-executor** runs `./gradlew mutationTest` (custom Gradle task)
-2. Custom task outputs JSON: `{class, mutations: [{pointId, variantIndex, result, killedByTest}]}` + JUnit XML
+1. **test-executor** runs `./gradlew test` (mutflow JUnit extension handles multi-run internally)
+2. Custom Gradle task `mutationResults` parses JUnit XML `<system-out>` (mutflow's `MutationTestingSummary` with all `killed by:` lines) and outputs JSON: `{class, mutations: [{sourceLocation, result, killedByTests[], killedByTest}], testMethods[], testKillerMatrix: {test → [sourceLocations]}}`
 3. **test-auditor** parses JSON + JUnit XML:
    - Builds mutation score: killed / total
-   - Cross-references test method names (from JUnit XML) against killedByTest values
-   - Flags tests never appearing in killedByTest as zombie candidates
+   - Uses `testKillerMatrix` to identify zombie candidates (tests never killed any mutation)
    - Counts MockK/Mockito calls for over-mocking detection
    - Computes quality band + confidence level
 4. **test-refactor-specialist** reviews flagged zombie candidates + over-mocked tests, generates improved test code
 
-### Known limitation
+### Limitations
 
-The approximate zombie detection (killedByTest cross-reference) produces false positives — a test that doesn't exercise mutated code will never appear as killedByTest, but isn't necessarily a zombie. The auditor must annotate flagged tests with confidence levels (low if the test doesn't appear to exercise the mutated class). Full per-test-per-mutation precision (Scott-CC's model) requires either forking mutflow's MutFlowSession to track ALL failing tests per mutation, or running each test individually per mutation (exponential cost). This is deferred to v2.
+- Display name normalization: JUnit XML `name` attributes give method names (e.g., `testValidateInput`), while JUnit 5 `context.displayName` may add `()` suffix (e.g., `testValidateInput()`). The auditor normalizes by stripping trailing `()`.
+- Surviving mutations still require manual investigation to determine if the mutation is genuinely untested or if the test is over-mocked.

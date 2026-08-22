@@ -15,7 +15,7 @@ Injecting small faults (mutations) into source code and running tests to see if 
 mutflow injects ALL mutation variants into the compiled code at compile time, guarded by conditional branches with `MutationRegistry.check()` calls. At runtime, one variant is activated per test run. This is a "compile-once" approach — no per-mutation recompilation needed.
 
 ### Zombie test
-A test that passes even when the code is broken (mutated). In Scott-CC's model, a zombie test passes for every mutation. In mutflow's model (this system), a zombie candidate is a test that never appears as the killer (`killedByTest`) for any killed mutation. The approximate approach may produce false positives for tests that don't exercise mutated code paths.
+A test that passes even when the code is broken (mutated). In Scott-CC's model, a zombie test passes for every mutation. In mutflow's model (this system), a zombie candidate is a test that never appears in the `testKillerMatrix` for any killed mutation — it executes during mutation runs but never kills any mutation. Full per-test-per-mutation tracking is enabled by the fork: mutflow records ALL tests that catch each mutation, not just the first.
 
 ### Over-mocked test
 A test that uses excessive mocking (`mockk()`, `mock()`), potentially masking real logic and reducing mutation sensitivity. Flagged when a test method has >3 mock calls.

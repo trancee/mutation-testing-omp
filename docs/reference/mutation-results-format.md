@@ -21,6 +21,7 @@ This reference describes the structured output produced by the `mutationResults`
 | `survived` | number | Mutations not caught by any test |
 | `timedOut` | number | Mutations that caused infinite loops |
 | `testMethods` | array[string] | All test method names from JUnit XML |
+| `testKillerMatrix` | object | Map: test displayName → array of mutation `sourceLocation` strings it killed. Enables full per-test-per-mutation zombie detection. |
 | `mutations` | array[object] | Per-mutation details |
 
 ### mutations[].sourceLocation
@@ -41,7 +42,11 @@ One of `Killed`, `Survived`, `TimedOut`.
 
 ### mutations[].killedByTest
 
-Name of the first test that caught the mutation (JUnit display name). `null` if the mutation survived.
+Name of the first test that caught the mutation (JUnit display name). `null` if the mutation survived. Kept for backward compatibility.
+
+### mutations[].killedByTests
+
+Array of ALL test display names that caught the mutation. `null` if the mutation survived. The mutflow fork records every test that fails during a mutation run, not just the first.
 
 **Example:**
 
@@ -56,13 +61,18 @@ Name of the first test that caught the mutation (JUnit display name). `null` if 
   "survived": 0,
   "timedOut": 0,
   "testMethods": ["testAdd()", "testGreet()", "testHasDiscount()"],
+  "testKillerMatrix": {
+    "testHasDiscount()": ["Calculator.kt:38", "Calculator.kt:42"],
+    "testAdd()": ["Calculator.kt:12", "Calculator.kt:15"]
+  },
   "mutations": [
     {
       "sourceLocation": "Calculator.kt:38",
       "originalOperator": ">=",
       "variantOperator": ">",
       "result": "Killed",
-      "killedByTest": "testHasDiscount()"
+      "killedByTest": "testHasDiscount()",
+      "killedByTests": ["testHasDiscount()"]
     }
   ]
 }
