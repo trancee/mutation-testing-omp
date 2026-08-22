@@ -1,26 +1,20 @@
 plugins {
     kotlin("jvm") version "2.4.0"
-    id("io.github.anschnapp.mutflow") version "1.1.0"
+    id("io.github.anschnapp.mutflow") version "1.0.5"
 }
 
 apply(from = rootProject.file("../.omp/mutation-results.gradle.kts"))
 
 kotlin {
-    sourceSets {
-        val main by getting {
-            dependencies {
-                implementation(kotlin("stdlib"))
-            }
-        }
-        val test by getting {
-            dependencies {
-                implementation(kotlin("test"))
-                implementation("io.github.anschnapp.mutflow:mutflow-junit6:1.1.0")
-                implementation("io.github.anschnapp.mutflow:mutflow-annotations:1.1.0")
-                implementation("org.junit.jupiter:junit-jupiter:6.0.0")
-            }
-        }
-    }
+    jvmToolchain(21)
+}
+
+repositories {
+    mavenCentral()
+}
+dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.3")
+    testImplementation("org.junit.platform:junit-platform-launcher:6.1.3")
 }
 
 tasks.test {
@@ -29,4 +23,9 @@ tasks.test {
         showStandardStreams = true
         events("passed", "skipped", "failed")
     }
+}
+
+mutflow {
+    enabled = true
+    targets = listOf("example.Calculator")
 }
