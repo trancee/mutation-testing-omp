@@ -37,7 +37,7 @@ object MutationResultsParser {
         val lines = stdout.lines().filter { it.isNotBlank() }
         var i = 0
         while (i < lines.size) {
-            val line = lines[i].replace("║", "").trim()
+            val line = lines[i].replace(Regex("[\\u2500-\\u257F]"), "").trim()
             val matcher = mutationPattern.matcher(line)
             if (matcher.matches()) {
                 val statusIcon = matcher.group(1)
@@ -57,7 +57,7 @@ object MutationResultsParser {
                     // Collect ALL "killed by:" lines that follow (full killer set)
                     var j = i + 1
                     while (j < lines.size) {
-                        val nextLine = lines[j].replace("║", "").trim()
+                        val nextLine = lines[j].replace(Regex("[\\u2500-\\u257F]"), "").trim()
                         val killedMatcher = killedByPattern.matcher(nextLine)
                         if (killedMatcher.matches()) {
                             killedByTests.add(killedMatcher.group(1).trim())

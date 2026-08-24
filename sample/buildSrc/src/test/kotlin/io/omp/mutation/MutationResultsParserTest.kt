@@ -114,4 +114,21 @@ class MutationResultsParserTest {
         assertEquals(1, mutations[0].killedByTests.size)
         assertEquals("testIsPositive", mutations[0].killedByTests[0])
     }
+
+    @Test
+    fun `various box-drawing characters are stripped`() {
+        val stdout = """
+            ✓ (Calculator.kt:7) > → >=
+                │ killed by: testIsPositive
+                ┃ killed by: testIsPositiveBoundary
+                ╎ killed by: testPositiveNumbers
+        """.trimIndent()
+
+        val mutations = parseMutflowSummary(stdout)
+        assertEquals(1, mutations.size)
+        assertEquals(3, mutations[0].killedByTests.size)
+        assertEquals("testIsPositive", mutations[0].killedByTests[0])
+        assertEquals("testIsPositiveBoundary", mutations[0].killedByTests[1])
+        assertEquals("testPositiveNumbers", mutations[0].killedByTests[2])
+    }
 }
