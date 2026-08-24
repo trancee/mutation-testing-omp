@@ -20,10 +20,14 @@ Collapse the 224-line `.omp/mutation-results.gradle.kts` Gradle script into a ty
 
 (none — all four questions are ticketed as 02–05)
 
-## Open tickets (frontier)
+## Status: complete ✅
 
-(none — all tickets resolved)
+All 5 tickets resolved and merged. See commits `cd77e56`, `b658bf7`, `8551502`, `ab16173` on `deepen-mutation-results-module` branch (PR #1, merged to main).
 
-## Out of scope
+### Resolution summary
+- **Typed module** in `.omp/mutation-results-src/` with `@Serializable` data classes, pure parser functions, kotlinx.serialization JSON
+- **buildSrc generation** in `bootstrap-mutation-testing.sh` — Step 3b generates typed module with Kotlin version detected from target project; also fixed `--jvm` default flag (was broken when called without explicit mode)
+- **18 unit tests** pass — parser, stats, serialization
+- **Backward compatible** — JSON output matches original schema byte-for-byte
+- **112-line adapter** (down from 224 lines) — `.omp/mutation-results.gradle.kts` delegates to buildSrc types
 
-- (nothing ruled out)

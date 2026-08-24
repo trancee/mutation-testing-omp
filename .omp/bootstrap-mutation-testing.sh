@@ -11,7 +11,7 @@ set -euo pipefail
 # configures build.gradle.kts and settings.gradle.kts.
 
 PROJECT_PATH="${1:-.}"
-KMP_MODE="${2:--jvm}"
+KMP_MODE="${2:---jvm}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [[ "$KMP_MODE" == "--kmp" ]]; then
@@ -185,9 +185,32 @@ mutflow {
 EOF
         echo "  Added mutflow configuration"
     fi
+    # Merge: copy source files
 fi
 
 rm -f "$build_file.bak"
+
+# --- Detect Kotlin version from target project ---
+KOTLIN_VERSION=$(grep -oE 'kotlin\("(jvm|multiplatform)"\) version "[0-9]+\.[0-9]+\.[0-9]+"' "$build_file" 2>/dev/null || true)
+if [[ "$KOTLIN_VERSION" =~ [0-9]+\.[0-9]+\.[0-9]+ ]]; then
+    KOTLIN_VERSION="${BASH_REMATCH[0]}"
+else
+    KOTLIN_VERSION=""
+fi
+if [[ -z "$KOTLIN_VERSION" ]]; then
+    KOTLIN_VERSION=$(grep -oE 'kotlin\("plugin\.serialization"\) version "[0-9]+\.[0-9]+\.[0-9]+"' "$build_file" 2>/dev/null || true)
+    if [[ "$KOTLIN_VERSION" =~ [0-9]+\.[0-9]+\.[0-9]+ ]]; then
+        KOTLIN_VERSION="${BASH_REMATCH[0]}"
+    else
+        KOTLIN_VERSION=""
+    fi
+fi
+if [[ -z "$KOTLIN_VERSION" ]]; then
+    KOTLIN_VERSION="2.4.0"
+    echo "  Warning: Could not detect Kotlin version from build.gradle.kts — using default $KOTLIN_VERSION"
+else
+    echo "  Detected Kotlin $KOTLIN_VERSION from build.gradle.kts"
+fi
 
 # --- Step 3b: Generate buildSrc for typed mutation-results module ---
 echo ""
@@ -200,7 +223,10 @@ if [[ ! -d "$buildsrc_dir" ]]; then
     cp "$target_dir/mutation-results-src/main/kotlin/io/omp/mutation/"*.kt "$buildsrc_dir/src/main/kotlin/io/omp/mutation/"
     cp "$target_dir/mutation-results-src/test/kotlin/io/omp/mutation/"*.kt "$buildsrc_dir/src/test/kotlin/io/omp/mutation/"
     cp "$target_dir/mutation-results-src/build.gradle.kts" "$buildsrc_dir/build.gradle.kts"
-    echo "  Created buildSrc/ with typed MutationResults module"
+    # Inject detected Kotlin version into buildSrc build.gradle.kts
+    sed -i.bak "s/kotlin(\"plugin.serialization\") version \"[0-9.]*\"/kotlin(\"plugin.serialization\") version \"$KOTLIN_VERSION\"/" "$buildsrc_dir/build.gradle.kts"
+    rm -f "$buildsrc_dir/build.gradle.kts.bak"
+    echo "  Created buildSrc/ with typed MutationResults module (Kotlin $KOTLIN_VERSION)"
 else
     # Merge: copy source files
     mkdir -p "$buildsrc_dir/src/main/kotlin/io/omp/mutation"
@@ -208,7 +234,10 @@ else
     cp "$target_dir/mutation-results-src/main/kotlin/io/omp/mutation/"*.kt "$buildsrc_dir/src/main/kotlin/io/omp/mutation/"
     cp "$target_dir/mutation-results-src/test/kotlin/io/omp/mutation/"*.kt "$buildsrc_dir/src/test/kotlin/io/omp/mutation/"
     cp "$target_dir/mutation-results-src/build.gradle.kts" "$buildsrc_dir/build.gradle.kts"
-    echo "  Updated buildSrc/ with typed MutationResults module"
+    # Inject detected Kotlin version into buildSrc build.gradle.kts
+    sed -i.bak "s/kotlin(\"plugin.serialization\") version \"[0-9.]*\"/kotlin(\"plugin.serialization\") version \"$KOTLIN_VERSION\"/" "$buildsrc_dir/build.gradle.kts"
+    rm -f "$buildsrc_dir/build.gradle.kts.bak"
+    echo "  Updated buildSrc/ with typed MutationResults module (Kotlin $KOTLIN_VERSION)"
 fi
 
 # --- Step 4: Summary ---
