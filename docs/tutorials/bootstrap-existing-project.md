@@ -28,6 +28,8 @@ Bootstrapping mutation testing into: .
 Mode: JVM
 
 Copying .omp agents, skills, and scripts...
+Setting up typed mutation-results module (buildSrc)...
+  Created buildSrc/ with typed MutationResults module
 Configuring settings.gradle.kts...
   Added pluginManagement block
 Configuring build.gradle.kts...
@@ -39,7 +41,7 @@ Configuring build.gradle.kts...
 ✅ Bootstrap complete!
 ```
 
-The script modified our `settings.gradle.kts` and `build.gradle.kts`, and copied the `.omp/` directory (agents, skills, and Gradle scripts) into our project.
+The script modified our `settings.gradle.kts` and `build.gradle.kts`, and copied the `.omp/` directory (agents, skills, scripts, and the typed results module) into our project.
 
 ## Step 2: Verify the Gradle setup
 
@@ -77,6 +79,8 @@ mutflow {
     enabled = true
 }
 ```
+
+5. A `buildSrc/` directory with the typed mutation-results module (data classes and pure parser functions).
 
 ## Step 3: Annotate business logic with @MutationTarget
 

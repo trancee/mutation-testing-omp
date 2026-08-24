@@ -1,20 +1,26 @@
 /**
  * Custom Gradle task: mutationResults
  *
- * Runs mutflow mutation tests and captures structured JSON output
- * for the test-auditor agent.
+ * Thin adapter that delegates to the typed MutationResults module in buildSrc.
  *
  * Usage in build.gradle.kts:
  *   apply(plugin = "io.github.anschnapp.mutflow")
- *   apply(from = rootProject.file("../.omp/mutation-results.gradle.kts"))
+ *   apply(from = rootProject.file(".omp/mutation-results.gradle.kts"))
  *
  * Output: build/reports/mutation-results.json
  *
  * mutflow's @MutFlowTest JUnit extension runs baseline (run 0) + mutation runs (run 1+)
  * internally. Each mutation run prints MutationTestingSummary to stdout.
  * Gradle captures stdout in JUnit XML's <system-out> elements.
+ *
+ * The typed data model, pure parsing functions, and JSON serialization live in
+ * buildSrc (see .omp/mutation-results-src/). This task only collects JUnit XML
+ * files, delegates to the parser, and writes the JSON output.
  */
 
+import io.omp.mutation.MutationResultsParser
+import io.omp.mutation.MutationResultsSerializer
+import io.omp.mutation.MutationResults
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
@@ -47,6 +53,7 @@ tasks.register<MutationResultsTask>("mutationResults") {
         }
     }
 }
+
 open class MutationResultsTask : DefaultTask() {
 
     @get:OutputFile
@@ -85,140 +92,21 @@ open class MutationResultsTask : DefaultTask() {
             }
 
         val stdout = allStdout.toString()
-        val mutations = parseMutflowSummary(stdout)
 
-        val total = mutations.size
-        val killed = mutations.count { it["result"] == "Killed" }
-        val survived = mutations.count { it["result"] == "Survived" }
-        val timedOut = mutations.count { it["result"] == "TimedOut" }
-        val score = if (total > 0) killed.toDouble() / total else 0.0
-        val band = when {
-            score > 0.8 -> "Excellent"
-            score > 0.6 -> "Good"
-            score > 0.3 -> "Fair"
-            else -> "Poor"
-        }
-        val confidence = when {
-            total < 10 -> "Low"
-            total <= 50 -> "Medium"
-            else -> "High"
-        }
-
+        // Delegate to typed module — pure functions, no Gradle dependency
+        val mutations = MutationResultsParser.parseMutflowSummary(stdout)
         val sortedTestMethods = testMethods.sorted()
-        val mutationsJson = mutations.joinToString(",\n") { m ->
-            val killedByTests = m["killedByTests"] as List<String>
-            val killedByTestsJson = killedByTests.joinToString(",") { "\"$it\"" }
-            val firstKiller = if (killedByTests.isNotEmpty()) "\"${killedByTests.first()}\"" else "null"
-            """{"sourceLocation":"${m["sourceLocation"]}","originalOperator":"${m["originalOperator"]}","variantOperator":"${m["variantOperator"]}","result":"${m["result"]}","killedByTest":$firstKiller,"killedByTests":[$killedByTestsJson]}"""
-        }
-        val testMethodsJson = sortedTestMethods.joinToString(",") { "\"$it\"" }
-
-        // Build per-test-per-mutation matrix: testName -> list of mutation sourceLocations it killed
-        val testKillerMatrix = mutableMapOf<String, MutableList<String>>()
-        mutations.forEach { m ->
-            val killedByTests = m["killedByTests"] as List<String>
-            val sourceLocation = m["sourceLocation"].toString()
-            killedByTests.forEach { testName ->
-                testKillerMatrix.getOrPut(testName) { mutableListOf() }.add(sourceLocation)
-            }
-        }
-        val testKillerMatrixJson = testKillerMatrix.entries.joinToString(",") { (test, locations) ->
-            val locsJson = locations.joinToString(",") { "\"$it\"" }
-            "\"$test\":[$locsJson]"
-        }
-
-        val json = """
-        {
-            "generatedAt": ${System.currentTimeMillis()},
-            "mutationScore": $score,
-            "qualityBand": "$band",
-            "confidence": "$confidence",
-            "totalMutations": $total,
-            "killed": $killed,
-            "survived": $survived,
-            "timedOut": $timedOut,
-            "testMethods": [$testMethodsJson],
-            "testKillerMatrix": {$testKillerMatrixJson},
-            "mutations": [$mutationsJson]
-        }
-        """.trimIndent()
+        val results = MutationResultsParser.assembleResults(
+            mutations = mutations,
+            testMethods = sortedTestMethods,
+        )
+        val json = MutationResultsSerializer.toJson(results)
 
         resultsFile.get().asFile.parentFile.mkdirs()
         resultsFile.get().asFile.writeText(json)
 
         logger.lifecycle("Mutation results written to: ${resultsFile.get().asFile}")
-        logger.lifecycle("  Score: ${String.format("%.1f%%", score * 100)} ($band, $confidence confidence)")
-        logger.lifecycle("  Killed: $killed, Survived: $survived, Timed out: $timedOut")
+        logger.lifecycle("  Score: ${String.format("%.1f%%", results.mutationScore * 100)} (${results.qualityBand}, ${results.confidence} confidence)")
+        logger.lifecycle("  Killed: ${results.killed}, Survived: ${results.survived}, Timed out: ${results.timedOut}")
     }
-
-    /**
-     * Parses mutflow's MutationTestingSummary from captured JUnit XML <system-out>.
-     *
-     * Output format (mutflow summary with multi-killer support):
-     *   ✓ (Calculator.kt:7) > → >=
-     *       killed by: isPositive returns false for zero()
-     *       killed by: testAnotherMethod()
-     *   ✗ (Calculator.kt:8) >= → >
-     *       SURVIVED - no test caught this mutation!
-     *   ⏱ (Calculator.kt:12) + → *
-     *       TIMED OUT - likely causes an infinite loop
-     *
-     * Multiple "killed by:" lines per mutation are captured (full per-test-per-mutation matrix).
-     */
-    private fun parseMutflowSummary(stdout: String): List<Map<String, Any?>> {
-        val mutations = mutableListOf<Map<String, Any?>>()
-
-        val mutationPattern = Pattern.compile(
-            """([✓✗⏱])\s*\(([^)]+)\)\s+(.+?)\s*(?:→|->)\s*(.+)"""
-        )
-        val killedByPattern = Pattern.compile("""(?:killed by:?\s*(.+))""")
-
-        val lines = stdout.lines().filter { it.isNotBlank() }
-        var i = 0
-        while (i < lines.size) {
-            val line = lines[i].replace("║", "").trim()
-            val matcher = mutationPattern.matcher(line)
-            if (matcher.matches()) {
-                val statusIcon = matcher.group(1)
-                val sourceLocation = matcher.group(2)
-                val originalOp = matcher.group(3).trim()
-                val variantOp = matcher.group(4).trim()
-
-                val result = when (statusIcon) {
-                    "✓" -> "Killed"
-                    "✗" -> "Survived"
-                    "⏱" -> "TimedOut"
-                    else -> "Unknown"
-                }
-
-                val killedByTests = mutableListOf<String>()
-                if (result == "Killed") {
-                    // Collect ALL "killed by:" lines that follow (full killer set)
-                    var j = i + 1
-                    while (j < lines.size) {
-                        val nextLine = lines[j].replace("║", "").trim()
-                        val killedMatcher = killedByPattern.matcher(nextLine)
-                        if (killedMatcher.matches()) {
-                            killedByTests.add(killedMatcher.group(1).trim())
-                            j++ // consume the killed-by line
-                        } else {
-                            break // stop at first non-killed-by line
-                        }
-                    }
-                    i = j - 1 // advance past all consumed killed-by lines
-                }
-
-                mutations.add(mapOf(
-                    "sourceLocation" to sourceLocation,
-                    "originalOperator" to originalOp,
-                    "variantOperator" to variantOp,
-                    "result" to result,
-                    "killedByTests" to killedByTests
-                ))
-            }
-            i++
-        }
-        return mutations
-    }
-
 }

@@ -43,6 +43,7 @@ mkdir -p "$target_dir"
 cp -r "$SCRIPT_DIR/agents" "$target_dir/"
 cp -r "$SCRIPT_DIR/skills" "$target_dir/"
 cp "$SCRIPT_DIR/mutation-results.gradle.kts" "$target_dir/"
+cp -r "$SCRIPT_DIR/mutation-results-src" "$target_dir/"
 
 # --- Step 2: Configure settings.gradle.kts ---
 echo ""
@@ -187,6 +188,28 @@ EOF
 fi
 
 rm -f "$build_file.bak"
+
+# --- Step 3b: Generate buildSrc for typed mutation-results module ---
+echo ""
+echo "Setting up typed mutation-results module (buildSrc)..."
+
+buildsrc_dir="$PROJECT_PATH/buildSrc"
+if [[ ! -d "$buildsrc_dir" ]]; then
+    mkdir -p "$buildsrc_dir/src/main/kotlin/io/omp/mutation"
+    mkdir -p "$buildsrc_dir/src/test/kotlin/io/omp/mutation"
+    cp "$target_dir/mutation-results-src/main/kotlin/io/omp/mutation/"*.kt "$buildsrc_dir/src/main/kotlin/io/omp/mutation/"
+    cp "$target_dir/mutation-results-src/test/kotlin/io/omp/mutation/"*.kt "$buildsrc_dir/src/test/kotlin/io/omp/mutation/"
+    cp "$target_dir/mutation-results-src/build.gradle.kts" "$buildsrc_dir/build.gradle.kts"
+    echo "  Created buildSrc/ with typed MutationResults module"
+else
+    # Merge: copy source files
+    mkdir -p "$buildsrc_dir/src/main/kotlin/io/omp/mutation"
+    mkdir -p "$buildsrc_dir/src/test/kotlin/io/omp/mutation"
+    cp "$target_dir/mutation-results-src/main/kotlin/io/omp/mutation/"*.kt "$buildsrc_dir/src/main/kotlin/io/omp/mutation/"
+    cp "$target_dir/mutation-results-src/test/kotlin/io/omp/mutation/"*.kt "$buildsrc_dir/src/test/kotlin/io/omp/mutation/"
+    cp "$target_dir/mutation-results-src/build.gradle.kts" "$buildsrc_dir/build.gradle.kts"
+    echo "  Updated buildSrc/ with typed MutationResults module"
+fi
 
 # --- Step 4: Summary ---
 echo ""

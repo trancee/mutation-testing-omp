@@ -15,6 +15,7 @@ Copy these from the mutation testing repo into your project root:
 - `.omp/agents/`
 - `.omp/skills/mutation-test/`
 - `.omp/mutation-results.gradle.kts`
+- `.omp/mutation-results-src/` (typed module source — copied to `buildSrc/`)
 
 ## Add plugin management
 
@@ -51,6 +52,20 @@ Apply the custom Gradle task that captures mutation results:
 ```kotlin
 apply(from = rootProject.file(".omp/mutation-results.gradle.kts"))
 ```
+
+## Set up the typed results module (buildSrc)
+
+The mutation-results task delegates to a typed Kotlin module in `buildSrc/`. Copy the module source and generate the build file:
+
+```bash
+mkdir -p buildSrc/src/main/kotlin/io/omp/mutation
+mkdir -p buildSrc/src/test/kotlin/io/omp/mutation
+cp .omp/mutation-results-src/main/kotlin/io/omp/mutation/*.kt buildSrc/src/main/kotlin/io/omp/mutation/
+cp .omp/mutation-results-src/test/kotlin/io/omp/mutation/*.kt buildSrc/src/test/kotlin/io/omp/mutation/
+cp .omp/mutation-results-src/build.gradle.kts buildSrc/build.gradle.kts
+```
+
+The `buildSrc/build.gradle.kts` template applies the `kotlin-dsl` plugin with `kotlinx-serialization` and depends on `kotlinx-serialization-json`. Adjust the Kotlin and serialization versions to match your project.
 
 ## Add test dependencies
 
