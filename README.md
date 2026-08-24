@@ -2,7 +2,7 @@
 
 A 5-agent mutation testing system for Kotlin (JVM-first) projects, powered by [mutflow](https://github.com/anschnapp/mutflow) and built on the [OMP](https://omp.sh/) agent/task/skill architecture.
 
-This ports [Scott-CC's](https://github.com/Scott-CC/mutation-testing-plugin) multi-agent orchestration to OMP, adapting from per-mutant git worktrees to mutflow's compile-once meta-mutant approach.
+This ports [Scott-CC's](https://github.com/citadelgrad/scott-cc/tree/main/plugins/mutation-testing) multi-agent orchestration to OMP, adapting from per-mutant git worktrees to mutflow's compile-once meta-mutant approach.
 
 ## Quick start
 
