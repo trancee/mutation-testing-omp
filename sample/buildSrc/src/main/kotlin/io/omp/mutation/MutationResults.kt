@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Quality band thresholds, matching the current mutation-results.gradle.kts logic:
+ * Quality band thresholds, matching the original mutation-results.gradle.kts logic:
  *   Excellent: >80%, Good: >60%, Fair: >30%, Poor: ≤30%
  */
 enum class QualityBand {

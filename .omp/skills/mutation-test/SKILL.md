@@ -22,11 +22,11 @@ Runs a mutation-testing analysis on a Kotlin (JVM-first) project using mutflow a
 
 `/mutation-test setup [project path] [--kmp]` bootstraps the entire system into a new project:
 
-1. **`.omp/` files copied**: agents, skills, `mutation-results.gradle.kts` copied to `project-path/.omp/`
+1. **`.omp/` files copied**: agents, skills, `mutation-results.gradle.kts`, `mutation-results-src/` copied to `project-path/.omp/`
 2. **`settings.gradle.kts`**: `pluginManagement` block added with `mavenCentral()` + `gradlePluginPortal()`
 3. **`build.gradle.kts`**: mutflow plugin, JUnit 6 dependencies, `apply(from = ...)` for mutation-results added
-4. **`test-saboteur`** (via `task`) annotates business-logic classes with `@MutationTarget`, test classes with `@MutFlowTest`, and wraps existing assertions in `MutFlow.underTest { }`
-5. **Verification**: `./gradlew mutationResults` compiles and runs
+4. **`buildSrc/` generated**: typed `MutationResults` module copied from `.omp/mutation-results-src/` with `kotlin-dsl` + `kotlinx-serialization` plugins
+5. **`test-saboteur`** (via `task`) annotates business-logic classes with `@MutationTarget`, test classes with `@MutFlowTest`, and wraps existing assertions in `MutFlow.underTest { }`
 
 ### What happens (full mutation test run)
 
