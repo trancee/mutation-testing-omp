@@ -29,7 +29,7 @@ R2 will produce a feature matrix showing Scott-CC features OMP lacks. R1 will sh
 
 - Ranked list of gaps to close, with rationale for each.
 
-## Resolution
+## Answer
 
 
 ### Re-prioritization (second grilling session)

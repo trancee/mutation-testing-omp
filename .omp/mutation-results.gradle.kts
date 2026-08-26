@@ -64,6 +64,7 @@ open class MutationResultsTask : DefaultTask() {
     val testTaskName: Property<String> = project.objects.property(String::class.java)
         .convention("test")
 
+
     @TaskAction
     fun generateResults() {
         val buildDir = project.layout.buildDirectory.get().asFile
@@ -73,32 +74,49 @@ open class MutationResultsTask : DefaultTask() {
         val allStdout = StringBuilder()
         val testMethods = mutableSetOf<String>()
 
-        resultsDir.walkTopDown()
-            .filter { it.isFile && it.name.startsWith("TEST-") && it.extension == "xml" }
-            .forEach { xmlFile ->
-                val content = xmlFile.readText()
-                // Extract test method names from <testcase> elements
-                val testcasePattern = Pattern.compile("""<testcase[^>]*\bname="([^"]+)"""")
-                val tcMatcher = testcasePattern.matcher(content)
-                while (tcMatcher.find()) {
-                    testMethods.add(tcMatcher.group(1))
+        val xmlFiles = if (resultsDir.exists()) {
+            resultsDir.walkTopDown()
+                .filter { it.isFile && it.name.startsWith("TEST-") && it.extension == "xml" }
+                .onEach { xmlFile ->
+                    val content = xmlFile.readText()
+                    val testcasePattern = Pattern.compile("""<testcase[^>]*\bname="([^"]+)""")
+                    val tcMatcher = testcasePattern.matcher(content)
+                    while (tcMatcher.find()) {
+                        testMethods.add(tcMatcher.group(1))
+                    }
+                    val sysoutPattern = Pattern.compile("<system-out>(.*?)</system-out>", Pattern.DOTALL)
+                    val soMatcher = sysoutPattern.matcher(content)
+                    while (soMatcher.find()) {
+                        allStdout.append(soMatcher.group(1)).append("\n")
+                    }
                 }
-                // Extract stdout from <system-out> elements (contains mutflow's MutationTestingSummary)
-                val sysoutPattern = Pattern.compile("<system-out>(.*?)</system-out>", Pattern.DOTALL)
-                val soMatcher = sysoutPattern.matcher(content)
-                while (soMatcher.find()) {
-                    allStdout.append(soMatcher.group(1)).append("\n")
-                }
-            }
+                .toList()
+        } else {
+            emptyList()
+        }
 
         val stdout = allStdout.toString()
 
+        // Detect build-level gaps (compilation failure, IR transform error, etc.)
+        val buildLevelGaps = mutableListOf<io.omp.mutation.ExecutionGap>()
+        if (xmlFiles.isEmpty()) {
+            val testTask = project.tasks.findByName(testTaskName.get())
+            val gradleExitCode = if (testTask?.state?.failure != null) 1 else null
+            buildLevelGaps.add(io.omp.mutation.ExecutionGap(
+                type = "COMPILATION_FAILURE",
+                reason = "No JUnit XML files found — likely compilation error or IR transformation error",
+                gradleExitCode = gradleExitCode,
+            ))
+        }
+
         // Delegate to typed module — pure functions, no Gradle dependency
         val mutations = MutationResultsParser.parseMutflowSummary(stdout)
+        val gaps = MutationResultsParser.detectGaps(stdout, mutations, buildLevelGaps)
         val sortedTestMethods = testMethods.sorted()
         val results = MutationResultsParser.assembleResults(
             mutations = mutations,
             testMethods = sortedTestMethods,
+            gaps = gaps,
         )
         val json = MutationResultsSerializer.toJson(results)
 
@@ -106,7 +124,11 @@ open class MutationResultsTask : DefaultTask() {
         resultsFile.get().asFile.writeText(json)
 
         logger.lifecycle("Mutation results written to: ${resultsFile.get().asFile}")
-        logger.lifecycle("  Score: ${String.format("%.1f%%", results.mutationScore * 100)} (${results.qualityBand}, ${results.confidence} confidence)")
+        val scoreStr = results.mutationScore?.let { String.format("%.1f%%", it * 100) } ?: "N/A"
+        logger.lifecycle("  Score: $scoreStr (${results.qualityBand}, ${results.confidence} confidence)")
         logger.lifecycle("  Killed: ${results.killed}, Survived: ${results.survived}, Timed out: ${results.timedOut}")
+        if (results.gaps > 0) {
+            logger.lifecycle("  Gaps: ${results.gaps} (${results.executionGaps.joinToString { it.type }})")
+        }
     }
 }

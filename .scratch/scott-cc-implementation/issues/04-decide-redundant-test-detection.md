@@ -23,9 +23,7 @@ Blocked by: 01
 ### Frontier after D1 resolution:
 - D2 (05-decide-auto-refactoring) — blocked by 01, 02 (both resolved) → **unblocked**
 - D3 (06-decide-execution-gap-reporting) — blocked by 03 (resolved) → **unblocked**
-## Answer
 
-**R1 resolved.** See `research/01-redundant-test-detection.md`. Ready for grilling.
 ## Question
 
 How should redundant test group detection be integrated into OMP's mutation-testing system?

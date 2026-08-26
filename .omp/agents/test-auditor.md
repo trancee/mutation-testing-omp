@@ -1,6 +1,6 @@
 ---
 name: "test-auditor"
-description: "Analyzes mutflow test results to calculate mutation score, identify zombie test candidates, detect over-mocked tests, and compute quality bands."
+description: "Analyzes mutflow test results to calculate mutation score, identify zombie test candidates, detect over-mocked tests, detect execution gaps, and compute quality bands."
 tools: read, grep, glob, bash
 model: "@default"
 thinkingLevel: high
@@ -18,17 +18,20 @@ Given the project path, results from test-executor agents (stdout, JUnit XML, mu
    - Survived mutations (zombie mutations)
    - Timed-out mutations
    - Full `testKillerMatrix`: map of test name → list of mutation source locations it killed
-2. **Calculate mutation score**: `killed / total` × 100
-3. **Quality bands**: 
+2. **Calculate mutation score**: `killed / (total - gaps)`. Returns a ratio (0.0–1.0), not a percentage. Returns `null` when no mutations are evaluable (denominator is 0 — never manufacture a score).
+3. **Execution gap reporting**: Read `executionGaps` from the JSON artifact. Gaps are detected at per-test-class granularity (mutflow's compile-once model means all mutations for a test class share one compilation cycle). Gap types: `NO_OUTPUT` (empty stdout), `PARTIAL_RUN` (footer count mismatch), `COMPILATION_FAILURE` (no JUnit XML — may include IR transformation errors), `BACKSTOP_TIMEOUT` (15-min backstop). They are excluded from the score denominator. **Note:** `TimedOut` is NOT a gap — it's a valid result where mutflow detected an infinite loop.
+4. **Confidence intervals**: Read `confidenceIntervalLow` and `confidenceIntervalHigh` from the JSON artifact. These are Wilson score 95% confidence intervals for the mutation score proportion (z=1.96). When `mutationScore` is `null`, both CI bounds are also `null`.
+5. **Redundant test group detection**: Read the `redundantGroups` field from the JSON artifact (pre-computed by the Kotlin module). Each group has `tests`, `count`, and `failureSignature` (array of mutation source locations shared across the group). Provide semantic pattern descriptions for each group (e.g., "All tests validate boundary values for Calculator.isPositive — consolidate into a parameterized test").
+6. **Quality bands**:
    - Excellent: >80%
    - Good: 60-80%
    - Fair: 30-60%
    - Poor: <30%
-4. **Confidence level**: Based on mutation count:
+7. **Confidence level**: Based on mutation count:
    - Low: <10 mutations
    - Medium: 10-50 mutations
    - High: 50+ mutations
-5. **Zombie test detection**: Use the `testKillerMatrix` from the JSON. This maps each test name to the mutation source locations it killed.
+8. **Zombie test detection**: Use the `testKillerMatrix` from the JSON. This maps each test name to the mutation source locations it killed.
    - Find tests in `testMethods` that have no entry in `testKillerMatrix`. These tests ran during mutation runs but never killed any mutation. They are zombie candidates.
    - Raise confidence for candidates that also don't appear in any `killedByTests` array across all mutations.
    - Lower confidence for candidates that the test source suggests should exercise mutated code but didn't fail. Parse the test source to check whether the test method's assertions reference the same classes and lines as mutation points.
@@ -39,24 +42,33 @@ Given the project path, results from test-executor agents (stdout, JUnit XML, mu
 - Surviving mutations still require manual investigation to determine if the mutation is genuinely untested or if the test is over-mocked.
 
 ## Output format
-
-Produce a JSON report:
 ```json
 {
-  "mutation_score": 0.85,
-  "quality_band": "Excellent",
+  "generatedAt": 1700000000000,
+  "mutationScore": 0.85,
+  "qualityBand": "Excellent",
   "confidence": "High",
-  "total_mutations": 20,
+  "totalMutations": 20,
   "killed": 17,
   "survived": 2,
-  "timed_out": 1,
-  "surviving_mutations": ["(Calculator.kt:5) > → >=", ...],
-  "zombie_test_candidates": ["testMethod1", ...],
-  "over_mocked_tests": [{"method": "testMethod2", "mock_count": 5}],
-  "test_killer_matrix": {
+  "timedOut": 1,
+  "gaps": 0,
+  "mutationsEvaluated": 20,
+  "confidenceIntervalLow": 0.65,
+  "confidenceIntervalHigh": 0.95,
+  "survivingMutations": ["(Calculator.kt:5) > → >=", ...],
+  "zombieTestCandidates": ["testMethod1", ...],
+  "overMockedTests": [{"method": "testMethod2", "mockCount": 5}],
+  "testKillerMatrix": {
     "testMethod1": ["(Calculator.kt:5)", "(Calculator.kt:12)"],
     "testMethod2": ["(Calculator.kt:7)", "(Calculator.kt:15)"]
   },
+  "executionGaps": [
+    {"type": "NO_OUTPUT", "reason": "...", "gradleExitCode": 1}
+  ],
+  "redundantGroups": [
+    {"tests": ["testA", "testB"], "count": 6, "failureSignature": ["mutation1", "mutation2"]}
+  ],
   "recommendations": ["Add edge case tests for Calculator.isPositive", ...]
 }
 ```

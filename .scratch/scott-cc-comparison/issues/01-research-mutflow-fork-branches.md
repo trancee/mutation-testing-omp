@@ -1,5 +1,5 @@
 Type: research
-Status: resolved (redundant — see Answer)
+Status: resolved
 Blocked by: (none)
 
 ## Question

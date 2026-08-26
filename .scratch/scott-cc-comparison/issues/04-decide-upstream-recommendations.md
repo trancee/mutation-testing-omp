@@ -24,7 +24,7 @@ R1 catalogs all 12 fork branches and identifies which are relevant to Scott-CC g
 - List of branches recommended for upstreaming, with rationale.
 - List of branches kept fork-private, with rationale.
 
-## Resolution
+## Answer
 
 **D2 resolved via grilling session.**
 

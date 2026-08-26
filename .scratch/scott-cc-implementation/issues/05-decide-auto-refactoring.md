@@ -20,9 +20,7 @@ Blocked by: 01, 02
 
 ### Frontier after D2 resolution:
 - D3 (06-decide-execution-gap-reporting) — blocked by 03 (resolved) → **unblocked and first in order**
-## Answer
 
-**R1 and R2 both resolved.** See `research/01-redundant-test-detection.md` and `research/02-research-auto-refactoring.md`. Ready for grilling.
 
 ## Question
 
