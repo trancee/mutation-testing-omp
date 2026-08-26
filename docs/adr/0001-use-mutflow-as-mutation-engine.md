@@ -7,6 +7,7 @@
 ## Context
 
 We need to choose a mutation testing engine for Kotlin (JVM-first) projects that:
+
 1. Integrates with Kotlin/JVM via a compiler plugin
 2. Supports JUnit 6
 3. Can inject mutations at compile time
@@ -33,12 +34,14 @@ Use **mutflow** as the mutation engine.
 ## Consequences
 
 ### Positive
+
 - No git worktree management — mutflow handles isolation via compile-once
 - Simpler orchestration: one executor per test class, not per mutation
 - Fast iteration: single compilation covers all mutations
 - Full per-test-per-mutation zombie detection: the fork tracks all tests that kill each mutation (`Killed(testNames: Set<String>)`), enabling precise zombie candidate identification via `testKillerMatrix`
 
 ### Negative
+
 - JVM-only: mutflow checks for `org.jetbrains.kotlin.jvm` plugin only — no KMP/JS/Native support. KMP expansion requires extending the Gradle plugin
 - No LLM-guided mutations: all operators are predefined and static. LLM serves as targeting specialist (suppression annotations), not as a mutation generator
 - Global synchronized lock: `MutationRegistry.withSession()` uses `synchronized(lock)` — only one mutation session active at a time, even across test classes

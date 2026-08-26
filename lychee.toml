@@ -1,0 +1,27 @@
+# Config for lychee (link checker) — see scripts/check-markdown.sh and CI.
+#
+# Checks all Markdown files for broken internal anchors and external URLs.
+# Retries transient network failures before failing CI.
+
+exclude_path = [
+    ".agents/",
+    ".git/",
+    ".gradle/",
+    ".scratch/",
+    "docs/agents/",
+    "build/",
+]
+
+exclude = [
+    # GitHub release/tag/compare URLs for unreleased versions.
+    "^https://github\\.com/[^/]+/[^/]+/releases/tag/v[^/]+$",
+    "^https://github\\.com/[^/]+/[^/]+/compare/v[^/]+\\.\\.\\.HEAD$",
+]
+
+# Retry transient network failures before failing CI.
+max_retries = 3
+retry_wait_time = 2
+timeout = 20
+
+# Accept range of HTTP status codes (2xx, 3xx, and 429 for rate limiting).
+accept = ["100..=103", "200..=299", "429"]

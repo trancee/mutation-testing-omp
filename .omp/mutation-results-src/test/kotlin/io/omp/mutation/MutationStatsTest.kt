@@ -138,10 +138,13 @@ class MutationStatsTest {
         assertNotNull(stats.confidenceIntervalLow)
         assertNotNull(stats.confidenceIntervalHigh)
         assertNotNull(stats.score)
-        assertTrue(stats.confidenceIntervalLow!! <= stats.score!!)
-        assertTrue(stats.confidenceIntervalHigh!! >= stats.score!!)
-        assertTrue(stats.confidenceIntervalLow!! >= 0.0)
-        assertTrue(stats.confidenceIntervalHigh!! <= 1.0)
+        val score = stats.score!!
+        val ciLow = stats.confidenceIntervalLow!!
+        val ciHigh = stats.confidenceIntervalHigh!!
+        assertTrue(ciLow <= score)
+        assertTrue(ciHigh >= score)
+        assertTrue(ciLow >= 0.0)
+        assertTrue(ciHigh <= 1.0)
     }
 
     @Test
@@ -150,9 +153,9 @@ class MutationStatsTest {
             MutationResult("($it)", ">", ">=", MutationResultType.Survived)
         }
         val stats = calculateMetrics(mutations)
-        assertNotNull(stats.score)
-        assertEquals(0.0, stats.score!!, 0.0001)
-        assertNotNull(stats.confidenceIntervalHigh)
-        assertTrue(stats.confidenceIntervalHigh!! < 0.2) // Wilson upper bound for 0/20 ≈ 0.19
+        val score = stats.score!!
+        assertEquals(0.0, score, 0.0001)
+        val ciHigh = stats.confidenceIntervalHigh!!
+        assertTrue(ciHigh < 0.2) // Wilson upper bound for 0/20 ≈ 0.19
     }
 }

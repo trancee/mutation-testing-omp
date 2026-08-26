@@ -56,13 +56,13 @@ plugins {
 }
 ```
 
-2. The mutation-results script applied:
+1. The mutation-results script applied:
 
 ```kotlin
 apply(from = rootProject.file(".omp/mutation-results.gradle.kts"))
 ```
 
-3. JUnit 6 dependencies added:
+1. JUnit 6 dependencies added:
 
 ```kotlin
 dependencies {
@@ -72,7 +72,7 @@ dependencies {
 }
 ```
 
-4. The mutflow configuration block:
+1. The mutflow configuration block:
 
 ```kotlin
 mutflow {
@@ -80,7 +80,7 @@ mutflow {
 }
 ```
 
-5. A `buildSrc/` directory with the typed mutation-results module (data classes and pure parser functions).
+1. A `buildSrc/` directory with the typed mutation-results module (data classes and pure parser functions).
 
 ## Step 3: Annotate business logic with @MutationTarget
 
@@ -118,6 +118,7 @@ The `@MutationTarget` annotation marks classes that contain business logic — c
 Open our existing test file. We'll add the `@MutFlowTest` annotation and wrap business logic calls in `MutFlow.underTest { }`:
 
 Before:
+
 ```kotlin
 package com.example.service
 
@@ -135,6 +136,7 @@ class UserServiceTest {
 ```
 
 After:
+
 ```kotlin
 package com.example.service
 

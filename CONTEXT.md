@@ -9,15 +9,19 @@ This system ports [Scott-CC's](https://github.com/citadelgrad/scott-cc/tree/main
 ## Key concepts
 
 ### Mutation testing
-Injecting small faults (mutations) into source code and running tests to see if they catch the faults. Metrics: mutation score = killed / total. High score = high-quality tests.
+
+Injecting small faults (mutations) into source code and running tests to see if they catch the faults. Metrics: mutation score = killed / (total - gaps). High score = high-quality tests. Returns null when no mutations are evaluable (denominator is 0).
 
 ### Meta-mutant (mutflow)
+
 mutflow injects ALL mutation variants into the compiled code at compile time, guarded by conditional branches with `MutationRegistry.check()` calls. At runtime, one variant is activated per test run. This is a "compile-once" approach — no per-mutation recompilation needed.
 
 ### Zombie test
+
 A test that passes even when the code is broken (mutated). In Scott-CC's model, a zombie test passes for every mutation. In mutflow's model (this system), a zombie candidate is a test that never appears in the `testKillerMatrix` for any killed mutation — it executes during mutation runs but never kills any mutation. Full per-test-per-mutation tracking is enabled by the fork: mutflow records ALL tests that catch each mutation, not just the first.
 
 ### Over-mocked test
+
 A test that uses excessive mocking (`mockk()`, `mock()`), potentially masking real logic and reducing mutation sensitivity. Flagged when a test method has >3 mock calls.
 
 ## Agent architecture
@@ -43,7 +47,7 @@ A test that uses excessive mocking (`mockk()`, `mock()`), potentially masking re
 
 ## Data contracts
 
-The `mutationResults` Gradle task outputs `mutation-results.json` including `killedByTests` (all killing tests per mutation) and `testKillerMatrix` (test → mutation source locations). The format and quality bands are documented in the [mutation results reference](../reference/mutation-results-format.md).
+The `mutationResults` Gradle task outputs `mutation-results.json` including `killedByTests` (all killing tests per mutation) and `testKillerMatrix` (test → mutation source locations). The format and quality bands are documented in the [mutation results reference](docs/reference/mutation-results-format.md).
 
 ## Decisions deferred to v2
 
