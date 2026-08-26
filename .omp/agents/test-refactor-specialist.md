@@ -38,6 +38,7 @@ Given the project path, audit report (from test-auditor), and the original test 
 ## Output format
 
 For each test file that needs improvement:
+
 - Return the full refactored test file content
 - List of changes made (added test, modified assertion, removed mock, consolidated tests)
 - Rationale for each change (which mutation it would catch)

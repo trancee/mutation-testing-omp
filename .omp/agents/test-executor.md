@@ -19,12 +19,13 @@ Given a Kotlin project path and a test class name (annotated with `@MutFlowTest`
 3. **Capture JUnit XML**: Located at `build/test-results/test/TEST-<TestClass>.xml` — contains all test method names (mutflow swallows failures during mutation runs, so all tests appear as "passed")
 4. **Capture mutation results JSON** (if custom Gradle task is configured): Contains `pointId`, `variantIndex`, `result` (Killed/Survived/TimedOut), `killedByTests` (array of ALL tests that caught each mutation) per mutation, plus `testKillerMatrix` (test → mutation source locations)
 5. **Gap detection**: Before reporting results, check for execution gaps:
--   - Gradle exit code ≠ 0 before test ran → compilation or IR transformation error
--   - Missing JUnit XML files → build-level gap (record as `COMPILATION_FAILURE`)
--   - 15-minute backstop timeout → `BACKSTOP_TIMEOUT` gap (report partial output captured so far)
--   - Empty stdout with no mutations found → `NO_OUTPUT` gap
--   - Footer count mismatch (mutflow summary says 20 mutations but parser found 15) → `PARTIAL_RUN` gap
--   - Report these as `execution_gaps` in the structured report alongside the partial results.
+
+- Gradle exit code ≠ 0 before test ran → compilation or IR transformation error
+- Missing JUnit XML files → build-level gap (record as `COMPILATION_FAILURE`)
+- 15-minute backstop timeout → `BACKSTOP_TIMEOUT` gap (report partial output captured so far)
+- Empty stdout with no mutations found → `NO_OUTPUT` gap
+- Footer count mismatch (mutflow summary says 20 mutations but parser found 15) → `PARTIAL_RUN` gap
+- Report these as `executionGaps` in the structured report alongside the partial results.
 
 ## Constraints
 
@@ -44,6 +45,7 @@ Given a Kotlin project path and a test class name (annotated with `@MutFlowTest`
 ## Output format
 
 Return a structured report:
+
 - Test class name
 - Gradle exit code and status
 - stdout content (especially the MutationTestingSummary section)

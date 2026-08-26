@@ -42,6 +42,7 @@ Given the project path, results from test-executor agents (stdout, JUnit XML, mu
 - Surviving mutations still require manual investigation to determine if the mutation is genuinely untested or if the test is over-mocked.
 
 ## Output format
+
 ```json
 {
   "generatedAt": 1700000000000,
