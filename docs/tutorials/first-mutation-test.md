@@ -155,9 +155,7 @@ Some mutations survived. This is expected — our tests don't cover boundary val
 
 ## Step 6: Add boundary tests to kill survivors
 
-mutflow found mutations our tests missed. For `isPositive(x: Int) = x > 0`, mutflow mutates `0` to `1` (making it `x > 1`) and `>` to `>=`. Our tests use `x = 5` (true under both) and `x = -1` (false under both) — neither catches the mutations.
-
-We need to test the boundary value `x = 0`. Under the original code, `isPositive(0)` returns `false`. Under the `0 → -1` mutant, it returns `true`. Our assertion should fail under the mutant:
+mutflow found mutations our initial tests missed — mutations to `>` and `0` produce the same results at `x = 5` and `x = -1`. We need boundary tests at `x = 0` and `x = 1`. For the full strategy on reading mutation output and choosing test values, see [How to fix surviving mutations](../how-to/fix-surviving-mutations.md).
 
 ```kotlin
 @Test
@@ -166,7 +164,7 @@ fun `isPositive returns false for zero`() {
 }
 ```
 
-This kills the `0 → -1` mutation. But the `0 → 1` mutant (making it `x > 1`) still survives — `isPositive(0)` is `false` under both `x > 0` and `x > 1`. We need `x = 1`:
+This catches the `>` → `>=` and `0` → `-1` mutations. The `0` → `1` mutation still survives — test `x = 1`:
 
 ```kotlin
 @Test
@@ -175,7 +173,7 @@ fun `isPositive returns true for one`() {
 }
 ```
 
-Under the original, `1 > 0 = true`. Under the `0 → 1` mutant, `1 > 1 = false` — our assertion catches it.
+Under the mutant, `1 > 1` is `false` — our assertion catches it.
 
 Re-run `gradle test`. The summary now shows all mutations killed:
 

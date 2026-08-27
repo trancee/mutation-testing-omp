@@ -111,7 +111,7 @@ class UserService {
 }
 ```
 
-The `@MutationTarget` annotation marks classes that contain business logic — comparisons, arithmetic, boolean logic, return values — the code mutflow's operators will mutate.
+The `@MutationTarget` annotation marks classes that mutflow should mutate. See [About mutflow's architecture](../explanation/mutflow-architecture.md) for what gets mutated.
 
 ## Step 4: Annotate tests with @MutFlowTest
 
@@ -156,7 +156,7 @@ class UserServiceTest {
 }
 ```
 
-We wrap the call to the `@MutationTarget` instance in `MutFlow.underTest { }` so mutflow can inject mutations. We don't wrap the `assertTrue` itself — only the call to the code under test.
+We wrap the call to the `@MutationTarget` instance in `MutFlow.underTest { }` so mutflow can inject mutations — not the `assertTrue` itself, only the call to the code under test.
 
 For more on this pattern, see [how to fix surviving mutations](../how-to/fix-surviving-mutations.md).
 

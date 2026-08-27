@@ -30,3 +30,12 @@
 | Topic | Document |
 |-------|----------|
 | Key concepts and glossary | [CONTEXT.md](../CONTEXT.md) |
+
+## Contributing
+
+| Goal | Document |
+|------|----------|
+| Write documentation following the Diataxi framework | [How-to: Contribute documentation](how-to/contribute-documentation.md) |
+| Run markdown lint and link checks | [How-to: Run documentation checks](how-to/run-checks.md) |
+
+## Domain
