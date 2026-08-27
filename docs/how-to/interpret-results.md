@@ -30,15 +30,10 @@ mutflow prints a summary after all runs:
 ## Step 2: Calculate your mutation score
 
 ```
-mutation score = killed / total
+mutation score = killed / (total - gaps)
 ```
 
-| Band | Score | Action |
-|------|-------|--------|
-| Excellent | >80% | Good coverage. Spot-check survivors. |
-| Good | 60–80% | Add tests for the surviving mutations listed in the summary. |
-| Fair | 30–60% | Significant test gaps. Prioritize boundary and edge case tests. |
-| Poor | <30% | Rewrite or add substantial test coverage. |
+The mutation score is a fraction (0.0–1.0). For the quality bands (Excellent / Good / Fair / Poor) and the recommended action at each level, see [Quality bands in the mutation results reference](../reference/mutation-results-format.md#quality-bands).
 
 ## Step 3: Locate surviving mutations
 
@@ -100,12 +95,6 @@ fun processLoop(items: List<String>) {
 
 ## Confidence levels
 
-Results are more reliable with more mutations:
-
-| Confidence | Mutation count |
-|------------|----------------|
-| Low | <10 |
-| Medium | 10–50 |
-| High | 50+ |
+For confidence levels based on mutation count, see [Confidence levels in the mutation results reference](../reference/mutation-results-format.md#confidence-levels).
 
 With Low confidence, survivors may be false positives — verify carefully.
