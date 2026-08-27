@@ -66,12 +66,15 @@ class MutationStatsTest {
     }
 
     @Test
-    fun `empty mutations list yields zero score and Poor band`() {
+    fun `empty mutations list yields null score and Poor band`() {
         val stats = calculateMetrics(emptyList())
-        assertEquals(0.0, stats.score)
+        assertNull(stats.score)
         assertEquals(QualityBand.Poor, stats.band)
         assertEquals(ConfidenceLevel.Low, stats.confidence)
         assertEquals(0, stats.total)
+        assertEquals(0, stats.mutationsEvaluated)
+        assertNull(stats.confidenceIntervalLow)
+        assertNull(stats.confidenceIntervalHigh)
     }
 
     @Test
@@ -83,10 +86,76 @@ class MutationStatsTest {
         )
 
         val stats = calculateMetrics(mutations)
-        assertEquals(1.0 / 3.0, stats.score, 0.0001)
+        assertEquals(1.0 / 3.0, stats.score!!, 0.0001)
         assertEquals(QualityBand.Fair, stats.band)
         assertEquals(1, stats.killed)
         assertEquals(1, stats.survived)
         assertEquals(1, stats.timedOut)
+    }
+
+    @Test
+    fun `score excludes gaps from denominator`() {
+        val mutations = listOf(
+            MutationResult("(File.kt:7)", ">", ">=", MutationResultType.Killed, "testA", listOf("testA")),
+            MutationResult("(File.kt:8)", ">=", ">", MutationResultType.Survived),
+            MutationResult("(File.kt:9)", "+", "*", MutationResultType.Survived),
+            MutationResult("(File.kt:10)", "-", "+", MutationResultType.Survived),
+        )
+        val stats = calculateMetrics(mutations, gaps = 1)
+        // 1 killed out of (4 - 1) = 3 evaluated → 1/3
+        assertEquals(1.0 / 3.0, stats.score!!, 0.0001)
+        assertEquals(4, stats.total)
+        assertEquals(3, stats.mutationsEvaluated)
+        assertEquals(1, stats.gaps)
+    }
+
+    @Test
+    fun `score is null when all mutations are gaps`() {
+        val mutations = listOf(
+            MutationResult("(File.kt:7)", ">", ">=", MutationResultType.Survived),
+        )
+        val stats = calculateMetrics(mutations, gaps = 1)
+        assertNull(stats.score)
+        assertEquals(QualityBand.Poor, stats.band)
+        assertEquals(0, stats.mutationsEvaluated)
+    }
+    @Test
+    fun `mutationsEvaluated clamped to zero when gaps exceed total`() {
+        val mutations = listOf(
+            MutationResult("(File.kt:7)", ">", ">=", MutationResultType.Survived),
+        )
+        val stats = calculateMetrics(mutations, gaps = 5)
+        assertNull(stats.score)
+        assertEquals(0, stats.mutationsEvaluated)
+    }
+
+    @Test
+    fun `confidence interval brackets score for all-killed`() {
+        val mutations = List(20) {
+            MutationResult("($it)", ">", ">=", MutationResultType.Killed, "testA", listOf("testA"))
+        }
+        val stats = calculateMetrics(mutations)
+        assertNotNull(stats.confidenceIntervalLow)
+        assertNotNull(stats.confidenceIntervalHigh)
+        assertNotNull(stats.score)
+        val score = stats.score!!
+        val ciLow = stats.confidenceIntervalLow!!
+        val ciHigh = stats.confidenceIntervalHigh!!
+        assertTrue(ciLow <= score)
+        assertTrue(ciHigh >= score)
+        assertTrue(ciLow >= 0.0)
+        assertTrue(ciHigh <= 1.0)
+    }
+
+    @Test
+    fun `confidence interval for 0 kills is centered near zero`() {
+        val mutations = List(20) {
+            MutationResult("($it)", ">", ">=", MutationResultType.Survived)
+        }
+        val stats = calculateMetrics(mutations)
+        val score = stats.score!!
+        assertEquals(0.0, score, 0.0001)
+        val ciHigh = stats.confidenceIntervalHigh!!
+        assertTrue(ciHigh < 0.2) // Wilson upper bound for 0/20 ≈ 0.19
     }
 }
