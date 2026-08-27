@@ -18,7 +18,14 @@ Given a Kotlin project path and a test class name (annotated with `@MutFlowTest`
 2. **Capture output**: Save stdout from the gradle run (contains mutflow's MutationTestingSummary with Killed/Survived/TimedOut per mutation)
 3. **Capture JUnit XML**: Located at `build/test-results/test/TEST-<TestClass>.xml` — contains all test method names (mutflow swallows failures during mutation runs, so all tests appear as "passed")
 4. **Capture mutation results JSON** (if custom Gradle task is configured): Contains `pointId`, `variantIndex`, `result` (Killed/Survived/TimedOut), `killedByTests` (array of ALL tests that caught each mutation) per mutation, plus `testKillerMatrix` (test → mutation source locations)
-5. **Timeout handling**: mutflow's internal 60s timeout per mutation run handles infinite-loop mutations. The OMP task timeout (15 min) is a backstop — if it triggers, report the partial output.
+5. **Gap detection**: Before reporting results, check for execution gaps:
+
+- Gradle exit code ≠ 0 before test ran → compilation or IR transformation error
+- Missing JUnit XML files → build-level gap (record as `COMPILATION_FAILURE`)
+- 15-minute backstop timeout → `BACKSTOP_TIMEOUT` gap (report partial output captured so far)
+- Empty stdout with no mutations found → `NO_OUTPUT` gap
+- Footer count mismatch (mutflow summary says 20 mutations but parser found 15) → `PARTIAL_RUN` gap
+- Report these as `executionGaps` in the structured report alongside the partial results.
 
 ## Constraints
 
@@ -38,9 +45,12 @@ Given a Kotlin project path and a test class name (annotated with `@MutFlowTest`
 ## Output format
 
 Return a structured report:
+
 - Test class name
 - Gradle exit code and status
 - stdout content (especially the MutationTestingSummary section)
 - Path to JUnit XML file
 - Path to mutation results JSON file (if available)
-- Any timeout or error information
+- Any timeout or error information (COMPILATION_FAILURE may include IR transformation errors, BACKSTOP_TIMEOUT)
+- executionGaps array (if any gaps detected: type, reason, gradleExitCode)
+- redundantGroups array (pre-computed: tests, count, failureSignature)

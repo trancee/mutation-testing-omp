@@ -87,21 +87,39 @@ object MutationResultsParser {
     }
 
     /**
-     * Calculates mutation score, quality band, confidence level, and totals
-     * from a list of parsed mutation results.
+     * Calculates mutation score, quality band, confidence level, confidence interval,
+     * and totals from parsed mutation results, accounting for execution gaps.
+     *
+     * Score = killed / (total - gaps). Returns null score when denominator is 0
+     * (mirrors Scott-CC's "never manufacture a score" principle).
+     *
+     * Confidence interval uses the Wilson score interval (appropriate for proportions,
+     * especially near 0 or 1 where the normal approximation degrades).
      */
-    fun calculateMetrics(mutations: List<MutationResult>): MutationStats {
+    fun calculateMetrics(
+        mutations: List<MutationResult>,
+        gaps: Int = 0,
+    ): MutationStats {
         val total = mutations.size
         val killed = mutations.count { it.result == MutationResultType.Killed }
         val survived = mutations.count { it.result == MutationResultType.Survived }
         val timedOut = mutations.count { it.result == MutationResultType.TimedOut }
-        val score = if (total > 0) killed.toDouble() / total else 0.0
+        val evaluated = maxOf(0, total - gaps)
+        val score: Double? = if (evaluated > 0) killed.toDouble() / evaluated else null
 
-        val band = when {
-            score > 0.8 -> QualityBand.Excellent
-            score > 0.6 -> QualityBand.Good
-            score > 0.3 -> QualityBand.Fair
-            else -> QualityBand.Poor
+        val band = score?.let { s ->
+            when {
+                s > 0.8 -> QualityBand.Excellent
+                s > 0.6 -> QualityBand.Good
+                s > 0.3 -> QualityBand.Fair
+                else -> QualityBand.Poor
+            }
+        } ?: QualityBand.Poor
+
+        val (ciLow, ciHigh) = if (evaluated > 0 && score != null) {
+            wilsonInterval(killed, evaluated)
+        } else {
+            null to null
         }
 
         val confidence = when {
@@ -118,6 +136,28 @@ object MutationResultsParser {
             killed = killed,
             survived = survived,
             timedOut = timedOut,
+            gaps = gaps,
+            mutationsEvaluated = evaluated,
+            confidenceIntervalLow = ciLow,
+            confidenceIntervalHigh = ciHigh,
+        )
+    }
+
+    /**
+     * Wilson score 95% confidence interval for a binomial proportion.
+     * Returns (low, high) bounds. Used for mutation score confidence intervals.
+     */
+    private fun wilsonInterval(successes: Int, trials: Int): Pair<Double?, Double?> {
+        if (trials <= 0) return null to null
+        val z = 1.96
+        val n = trials.toDouble()
+        val phat = successes.toDouble() / n
+        val denom = 1 + z * z / n
+        val center = (phat + z * z / (2 * n)) / denom
+        val margin = z * kotlin.math.sqrt(phat * (1 - phat) / n + z * z / (4 * n * n)) / denom
+        return Pair(
+            maxOf(0.0, center - margin),
+            minOf(1.0, center + margin),
         )
     }
 
@@ -136,16 +176,111 @@ object MutationResultsParser {
     }
 
     /**
+     * Detects redundant test groups: tests that share an identical failure
+     * signature (same set of mutations they killed), indicating consolidation
+     * opportunities. Groups exceeding [threshold] are returned.
+     *
+     * Uses composite mutation keys (sourceLocation:originalOp->variantOp) for
+     * precision — same approach as the testKillerMatrix but with per-mutation
+     * granularity for accurate signature matching.
+     */
+    fun detectRedundantTestGroups(
+        mutations: List<MutationResult>,
+        threshold: Int = 5,
+    ): List<RedundantGroup> {
+        val testSignatures = mutableMapOf<String, MutableSet<String>>()
+
+        mutations.forEach { mutation ->
+            if (mutation.result == MutationResultType.Killed) {
+                val mutationKey = "${mutation.sourceLocation}:${mutation.originalOperator}->${mutation.variantOperator}"
+                mutation.killedByTests.forEach { testName ->
+                    testSignatures.getOrPut(testName) { mutableSetOf() }.add(mutationKey)
+                }
+            }
+        }
+
+        val groups = mutableMapOf<Set<String>, MutableList<String>>()
+        testSignatures.forEach { (testName, signature) ->
+            if (signature.isNotEmpty()) {
+                groups.getOrPut(signature.toSet()) { mutableListOf() }.add(testName)
+            }
+        }
+
+        return groups.filter { it.value.size > threshold }
+            .map { (signature, tests) ->
+                RedundantGroup(
+                    tests = tests.sorted(),
+                    count = tests.size,
+                    failureSignature = tests.first().let { testSignatures[it] }.orEmpty().sorted(),
+                )
+            }
+            .sortedByDescending { it.count }
+    }
+
+    /**
+     * Detects execution gaps from mutflow's output at the parser level.
+     *
+     * Two gap types are detectable from stdout + parsed mutations:
+     * - [ExecutionGap] with type "NO_OUTPUT" — stdout is empty or no mutations parsed
+     * - "PARTIAL_RUN" — mutflow's summary footer reports more mutations than were parsed
+     *
+     * Build-level gaps (COMPILATION_FAILURE, IR_TRANSFORMATION_ERROR, BACKSTOP_TIMEOUT)
+     * are detected by the Gradle task / test-executor and passed in via [buildLevelGaps].
+     */
+    fun detectGaps(
+        stdout: String,
+        mutations: List<MutationResult>,
+        buildLevelGaps: List<ExecutionGap> = emptyList(),
+    ): List<ExecutionGap> {
+        val gaps = buildLevelGaps.toMutableList()
+
+        if (stdout.isBlank()) {
+            if (gaps.isEmpty()) {
+                gaps.add(ExecutionGap(
+                    type = "NO_OUTPUT",
+                    reason = "No mutflow output captured — test class may have failed to produce JUnit XML",
+                ))
+            }
+        } else if (mutations.isEmpty()) {
+            gaps.add(ExecutionGap(
+                type = "NO_OUTPUT",
+                reason = "Stdout was non-empty but no mutation results could be parsed",
+            ))
+        }
+
+        // Check for partial runs: mutflow prints a footer with total mutation count.
+        // If the parsed count is less than reported, some mutations were not fully evaluated.
+        val footerMatcher = java.util.regex.Pattern.compile("""(\d+)\s+mutat""").matcher(stdout)
+        var reportedCount = 0
+        while (footerMatcher.find()) {
+            reportedCount = footerMatcher.group(1).toInt()
+        }
+        if (reportedCount > 0 && mutations.size < reportedCount) {
+            gaps.add(ExecutionGap(
+                type = "PARTIAL_RUN",
+                reason = "Parsed ${mutations.size} mutations but mutflow reported $reportedCount in summary footer",
+            ))
+        }
+
+        return gaps
+    }
+
+    /**
      * Assembles a complete [MutationResults] from parsed mutations, test method
-     * names, and the generated-at timestamp.
+     * names, execution gaps, redundant groups, and the generated-at timestamp.
+     *
+     * If [redundantGroups] is null, redundant groups are computed from the mutations.
      */
     fun assembleResults(
         mutations: List<MutationResult>,
         testMethods: List<String>,
         generatedAt: Long = System.currentTimeMillis(),
+        gaps: List<ExecutionGap> = emptyList(),
+        redundantGroups: List<RedundantGroup>? = null,
     ): MutationResults {
-        val stats = calculateMetrics(mutations)
+        val stats = calculateMetrics(mutations, gaps.size)
         val testKillerMatrix = buildTestKillerMatrix(mutations)
+        val rg = redundantGroups ?: detectRedundantTestGroups(mutations)
 
         return MutationResults(
             generatedAt = generatedAt,
@@ -156,9 +291,15 @@ object MutationResultsParser {
             killed = stats.killed,
             survived = stats.survived,
             timedOut = stats.timedOut,
+            gaps = stats.gaps,
+            mutationsEvaluated = stats.mutationsEvaluated,
+            confidenceIntervalLow = stats.confidenceIntervalLow,
+            confidenceIntervalHigh = stats.confidenceIntervalHigh,
             testMethods = testMethods,
             testKillerMatrix = testKillerMatrix,
             mutations = mutations,
+            executionGaps = gaps,
+            redundantGroups = rg,
         )
     }
 }

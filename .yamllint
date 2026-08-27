@@ -1,0 +1,10 @@
+---
+# Minimal yamllint config for GitHub Actions workflows and project YAML.
+extends: default
+
+rules:
+  document-start: disable
+  line-length:
+    max: 200
+  truthy:
+    check-keys: false

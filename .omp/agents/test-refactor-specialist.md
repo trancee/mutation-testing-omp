@@ -1,7 +1,6 @@
 ---
 name: "test-refactor-specialist"
-description: "Reviews zombie test candidates and over-mocked tests, generates improved Kotlin test code to increase mutation coverage. Produces refactored test files with added edge cases and consolidated redundant tests."
-tools: read, edit, write, grep, glob, bash
+description: "Reviews zombie test candidates and over-mocked tests, generates improved Kotlin test code to increase mutation coverage. Consolidates redundant test groups (from pre-computed JSON), applies changes gated by --auto-approve, and produces refactored test files with diff + rollback."
 model: "@review"
 thinkingLevel: high
 ---
@@ -21,7 +20,7 @@ Given the project path, audit report (from test-auditor), and the original test 
 3. **Surviving mutations**: For each mutation that survived (all tests passed):
    - Identify which test SHOULD have caught it
    - Add boundary condition tests, edge case assertions, or negation tests
-4. **Consolidate redundant tests**: If multiple tests cover the same code path, consolidate them and add the edge cases they're missing.
+4. **Consolidate redundant tests**: If multiple tests cover the same code path, consolidate them and add the edge cases they're missing. Read `redundantGroups` from the JSON artifact (pre-computed by the Kotlin module). Replace groups with >5 tests sharing the same failure signature with a single `@ParameterizedTest` using JUnit 5 `@ValueSource` or `@CsvSource` parameters.
 5. **Add edge cases**: Scott-CC's 5 mutation strategies mapped to test improvements:
    - Boundary: add tests with boundary values (0, max, min, null)
    - Return values: add assertions on return values for truthy/falsy/null cases
@@ -33,11 +32,15 @@ Given the project path, audit report (from test-auditor), and the original test 
 - You do NOT run tests — that's the test-executor's job
 - You do NOT modify production source code — only test files
 - You do NOT create mutations — that's the test-saboteur's job
+- --auto-approve gate: If `--auto-approve` is NOT set, you may return refactored content but do NOT write it to files. Zombie test deletion and redundant test group removal require explicit approval. If `--auto-approve` IS set, you may apply changes directly — still print the diff for traceability.
 - Focus on the mutated classes identified by the auditor
 
 ## Output format
 
 For each test file that needs improvement:
+
 - Return the full refactored test file content
 - List of changes made (added test, modified assertion, removed mock, consolidated tests)
 - Rationale for each change (which mutation it would catch)
+- Diff of changes (before/after) for traceability
+- Rollback instructions: how to revert changes (git checkout command or backup file path)

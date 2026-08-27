@@ -30,6 +30,7 @@ Given a Kotlin project path, analyze the source code and configure mutflow mutat
 ## mutflow operator awareness
 
 mutflow's predefined operators cover 4 of Scott-CC's 5 mutation strategies:
+
 - Boundary conditions: `RelationalComparisonOperator` (> ↔ >=, < ↔ <=), `ConstantBoundaryOperator`
 - Return values: `BooleanReturnOperator`, `NullableReturnOperator`
 - Boolean logic: `BooleanInversionOperator`, `EqualitySwapOperator`, `BooleanLogicOperator`
@@ -41,6 +42,7 @@ Your target annotations should focus on code that these operators will meaningfu
 ## Output format
 
 Return a structured summary:
+
 - List of classes annotated with `@MutationTarget` (with brief rationale)
 - List of test classes annotated with `@MutFlowTest`
 - List of suppression comments added (with line numbers)

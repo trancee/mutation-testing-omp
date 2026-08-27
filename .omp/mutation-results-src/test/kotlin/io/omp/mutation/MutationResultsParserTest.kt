@@ -1,6 +1,8 @@
 package io.omp.mutation
 
 import io.omp.mutation.MutationResultsParser.parseMutflowSummary
+import io.omp.mutation.MutationResultsParser.detectRedundantTestGroups
+import io.omp.mutation.MutationResultsParser.detectGaps
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 
@@ -130,5 +132,134 @@ class MutationResultsParserTest {
         assertEquals("testIsPositive", mutations[0].killedByTests[0])
         assertEquals("testIsPositiveBoundary", mutations[0].killedByTests[1])
         assertEquals("testPositiveNumbers", mutations[0].killedByTests[2])
+    }
+
+    @Test
+    fun `redundant group detected when 6 tests share identical signature`() {
+        // 6 tests all kill the same mutation → identical signature → redundant group
+        val mutations = listOf(
+            MutationResult("(Calc.kt:7)", ">", ">=", MutationResultType.Killed, null,
+                listOf("testA", "testB", "testC", "testD", "testE", "testF")),
+        )
+        val groups = detectRedundantTestGroups(mutations)
+        assertEquals(1, groups.size)
+        assertEquals(6, groups[0].count)
+        assertEquals(6, groups[0].tests.size)
+        assertTrue(groups[0].tests.contains("testA"))
+        assertEquals(1, groups[0].failureSignature.size)
+        assertEquals("(Calc.kt:7):>->>=", groups[0].failureSignature[0])
+    }
+
+    @Test
+    fun `five tests with identical signature is not redundant`() {
+        val mutations = listOf(
+            MutationResult("(Calc.kt:7)", ">", ">=", MutationResultType.Killed, null,
+                listOf("testA", "testB", "testC", "testD", "testE")),
+        )
+        val groups = detectRedundantTestGroups(mutations)
+        assertEquals(0, groups.size)
+    }
+    @Test
+    fun `different signatures are not grouped`() {
+        val mutations = listOf(
+            MutationResult("(Calc.kt:7)", ">", ">=", MutationResultType.Killed, null,
+                listOf("testA", "testB", "testC", "testD", "testE", "testF")),
+            MutationResult("(Calc.kt:8)", ">=", ">", MutationResultType.Killed, null,
+                listOf("testA", "testB", "testC", "testD", "testE", "testF")),
+            MutationResult("(Calc.kt:9)", "+", "*", MutationResultType.Killed, null,
+                listOf("testG", "testH", "testI")),
+        )
+        val groups = detectRedundantTestGroups(mutations)
+        // testA-F (6 tests, same signature {7, 8}) → redundant
+        // testG-I (3 tests, signature {9}) → below threshold
+        assertEquals(1, groups.size)
+        assertEquals(6, groups[0].count)
+    }
+
+
+    @Test
+    fun `zombies with empty signatures are not flagged as redundant`() {
+        val mutations = listOf(
+            MutationResult("(Calc.kt:7)", ">", ">=", MutationResultType.Survived), // no killer tests
+            MutationResult("(Calc.kt:8)", ">=", ">", MutationResultType.Survived),
+        )
+        val groups = detectRedundantTestGroups(mutations)
+        assertEquals(0, groups.size)
+    }
+
+    @Test
+    fun `multiple redundant groups are sorted by count descending`() {
+        val mutations = listOf(
+            MutationResult("(A.kt:1)", ">", ">=", MutationResultType.Killed, null,
+                listOf("a1", "a2", "a3", "a4", "a5", "a6", "a7")),
+            MutationResult("(B.kt:2)", ">", ">=", MutationResultType.Killed, null,
+                listOf("b1", "b2", "b3", "b4", "b5", "b6")),
+        )
+        val groups = detectRedundantTestGroups(mutations)
+        assertEquals(2, groups.size)
+        assertEquals(7, groups[0].count)
+        assertEquals(6, groups[1].count)
+    }
+
+    @Test
+    fun `detectGaps returns NO_OUTPUT for empty stdout`() {
+        val gaps = MutationResultsParser.detectGaps(
+            stdout = "",
+            mutations = emptyList(),
+        )
+        assertEquals(1, gaps.size)
+        assertEquals("NO_OUTPUT", gaps[0].type)
+    }
+
+    @Test
+    fun `detectGaps returns NO_OUTPUT when stdout non-empty but no mutations parsed`() {
+        val gaps = MutationResultsParser.detectGaps(
+            stdout = "mutflow summary output without recognizable lines",
+            mutations = emptyList(),
+        )
+        assertEquals(1, gaps.size)
+        assertEquals("NO_OUTPUT", gaps[0].type)
+    }
+
+    @Test
+    fun `detectGaps returns empty for normal output`() {
+        val stdout = """
+            ✓ (Calculator.kt:7) > → >=
+                killed by: testIsPositive
+            ✗ (Calculator.kt:8) >= → >
+                SURVIVED - no test caught this mutation!
+        """.trimIndent()
+        val mutations = parseMutflowSummary(stdout)
+        val gaps = MutationResultsParser.detectGaps(stdout, mutations)
+        assertEquals(0, gaps.size)
+    }
+
+    @Test
+    fun `detectGaps detects PARTIAL_RUN when footer count exceeds parsed`() {
+        val stdout = """
+            ✓ (Calc.kt:1) > → >=
+                killed by: testA
+            Results: 5 mutations tested
+        """.trimIndent()
+        val mutations = parseMutflowSummary(stdout) // finds 1 mutation
+        val gaps = MutationResultsParser.detectGaps(stdout, mutations)
+        assertTrue(gaps.any { it.type == "PARTIAL_RUN" })
+    }
+
+    @Test
+    fun `detectGaps preserves build-level gaps passed in`() {
+        val buildGap = ExecutionGap(
+            type = "COMPILATION_FAILURE",
+            reason = "IR transformation error",
+            testClass = "CalculatorTest",
+        )
+        val gaps = MutationResultsParser.detectGaps(
+            stdout = "",
+            mutations = emptyList(),
+            buildLevelGaps = listOf(buildGap),
+        )
+        // Should have the build-level gap, and NO_OUTPUT is skipped because build gap exists
+        assertEquals(1, gaps.size)
+        assertEquals("COMPILATION_FAILURE", gaps[0].type)
     }
 }

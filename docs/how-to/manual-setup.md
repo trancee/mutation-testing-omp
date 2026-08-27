@@ -32,7 +32,7 @@ pluginManagement {
 
 mutflow is published to Maven Central only, not the Gradle Plugin Portal. `mavenCentral()` is required.
 
-For exception type mutations and full per-test-per-mutation zombie detection, use the fork version (pending upstream merge). See [CONTEXT.md](../CONTEXT.md) for details.
+For exception type mutations and full per-test-per-mutation zombie detection, use the fork version (pending upstream merge). See [CONTEXT.md](../../CONTEXT.md) for details.
 
 ## Add the mutflow plugin
 

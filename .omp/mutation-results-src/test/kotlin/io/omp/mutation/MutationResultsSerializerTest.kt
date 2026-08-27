@@ -12,6 +12,10 @@ import org.junit.jupiter.api.Test
 
 class MutationResultsSerializerTest {
 
+    companion object {
+        val testJson = Json { ignoreUnknownKeys = true }
+    }
+
     @Test
     fun `serializes killed mutation with both killer fields`() {
         val mutations = listOf(
@@ -31,7 +35,7 @@ class MutationResultsSerializerTest {
         )
 
         val json = MutationResultsSerializer.toJson(results)
-        val parsed = Json { ignoreUnknownKeys = true }.parseToJsonElement(json).jsonObject
+        val parsed = testJson.parseToJsonElement(json).jsonObject
 
         // Verify backward-compatible field names
         assertNotNull(parsed["generatedAt"])
@@ -72,7 +76,7 @@ class MutationResultsSerializerTest {
         val results = MutationResultsParser.assembleResults(mutations, listOf("testFoo"))
 
         val json = MutationResultsSerializer.toJson(results)
-        val parsed = Json { ignoreUnknownKeys = true }.parseToJsonElement(json).jsonObject
+        val parsed = testJson.parseToJsonElement(json).jsonObject
         val firstMutation = parsed["mutations"]!!.jsonArray[0].jsonObject
 
         assertEquals("Survived", firstMutation["result"]!!.jsonPrimitive.content)
@@ -101,7 +105,7 @@ class MutationResultsSerializerTest {
         val results = MutationResultsParser.assembleResults(mutations, listOf("testIsPositive", "testPositiveNumbers"))
 
         val json = MutationResultsSerializer.toJson(results)
-        val parsed = Json { ignoreUnknownKeys = true }.parseToJsonElement(json).jsonObject
+        val parsed = testJson.parseToJsonElement(json).jsonObject
         val matrix = parsed["testKillerMatrix"]!!.jsonObject
 
         assertTrue(matrix.containsKey("testIsPositive"))
@@ -126,11 +130,76 @@ class MutationResultsSerializerTest {
         val results = MutationResultsParser.assembleResults(mutations, listOf("test"))
 
         val json = MutationResultsSerializer.toJson(results)
-        val parsed = Json { ignoreUnknownKeys = true }.parseToJsonElement(json).jsonObject
+        val parsed = testJson.parseToJsonElement(json).jsonObject
 
         assertEquals("Excellent", parsed["qualityBand"]!!.jsonPrimitive.content)
         assertEquals("Medium", parsed["confidence"]!!.jsonPrimitive.content)
         assertEquals(20, parsed["totalMutations"]!!.jsonPrimitive.int)
         assertEquals(20, parsed["killed"]!!.jsonPrimitive.int)
+    }
+    @Test
+    fun `serializes gaps and confidence interval fields`() {
+        val mutations = listOf(
+            MutationResult("(Calc.kt:7)", ">", ">=", MutationResultType.Killed, "testA", listOf("testA")),
+            MutationResult("(Calc.kt:8)", ">=", ">", MutationResultType.Survived),
+        )
+        val results = MutationResultsParser.assembleResults(
+            mutations = mutations,
+            testMethods = listOf("testA"),
+            generatedAt = 1700000000000L,
+            gaps = listOf(ExecutionGap(type = "NO_OUTPUT", reason = "test class skipped")),
+        )
+        val json = MutationResultsSerializer.toJson(results)
+        val parsed = testJson.parseToJsonElement(json).jsonObject
+
+        assertNotNull(parsed["gaps"])
+        assertEquals(1, parsed["gaps"]!!.jsonPrimitive.int)
+        assertNotNull(parsed["mutationsEvaluated"])
+        assertEquals(1, parsed["mutationsEvaluated"]!!.jsonPrimitive.int)
+        assertNotNull(parsed["confidenceIntervalLow"])
+        assertNotNull(parsed["confidenceIntervalHigh"])
+        assertNotNull(parsed["executionGaps"])
+        assertEquals("NO_OUTPUT", parsed["executionGaps"]!!.jsonArray[0].jsonObject["type"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun `serializes redundantGroups`() {
+        val mutations = List(6) { i ->
+            MutationResult("(Calc.kt:$i)", ">", ">=", MutationResultType.Killed, null,
+                listOf("testA", "testB", "testC", "testD", "testE", "testF"))
+        }
+        val results = MutationResultsParser.assembleResults(
+            mutations = mutations,
+            testMethods = listOf("testA", "testB", "testC", "testD", "testE", "testF"),
+            generatedAt = 1700000000000L,
+        )
+        val json = MutationResultsSerializer.toJson(results)
+        val parsed = testJson.parseToJsonElement(json).jsonObject
+
+        assertNotNull(parsed["redundantGroups"])
+        assertEquals(1, parsed["redundantGroups"]!!.jsonArray.size)
+        val group = parsed["redundantGroups"]!!.jsonArray[0].jsonObject
+        assertEquals(6, group["count"]!!.jsonPrimitive.int)
+        assertEquals(6, group["tests"]!!.jsonArray.size)
+    }
+
+    @Test
+    fun `null mutationScore when all mutations are gaps`() {
+        val mutations = listOf(
+            MutationResult("(Calc.kt:7)", ">", ">=", MutationResultType.Survived),
+        )
+        val results = MutationResultsParser.assembleResults(
+            mutations = mutations,
+            testMethods = listOf("testA"),
+            generatedAt = 1700000000000L,
+            gaps = listOf(ExecutionGap(type = "COMPILATION_FAILURE", reason = "IR transform error")),
+        )
+        val json = MutationResultsSerializer.toJson(results)
+        val parsed = testJson.parseToJsonElement(json).jsonObject
+
+        // mutationScore should be null (0 evaluated mutations)
+        assertEquals(JsonNull, parsed["mutationScore"])
+        assertEquals(0, parsed["mutationsEvaluated"]!!.jsonPrimitive.int)
+        assertEquals(1, parsed["gaps"]!!.jsonPrimitive.int)
     }
 }

@@ -1,0 +1,20 @@
+{
+  // Markdown lint rules for OMP mutation-testing docs.
+  "config": {
+    "default": true,
+    // Long-form prose (CHANGELOG, ADRs, agent docs) is not wrapped at 80 columns.
+    "MD013": false,
+    // Agent docs intentionally reuse standard section names.
+    "MD024": false,
+    // docs use inline HTML for formatting.
+    "MD033": false,
+    // Agent docs start with YAML frontmatter, not markdown headings.
+    "MD041": false,
+    // Some code blocks are JSON/YAML, not language-specific code.
+    "MD040": false,
+    // Technical docs use bare URLs in references sections.
+    "MD034": false,
+    // Tables in CONTEXT.md use compact pipe style.
+    "MD060": false
+  }
+}
