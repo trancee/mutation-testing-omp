@@ -3,7 +3,7 @@ package example
 import io.github.anschnapp.mutflow.MutationTarget
 
 /**
- * Simple calculator demonstrating all 4 Scott-CC mutation strategies
+ * Simple calculator demonstrating all 5 Scott-CC mutation strategies
  * that map to mutflow's operator catalog:
  *
  * - Boundary conditions: isPositive (> 0), isInRange (>= lower, <= upper)
@@ -11,7 +11,6 @@ import io.github.anschnapp.mutflow.MutationTarget
  * - Arithmetic: add (+), multiply (*)
  * - Return values: BooleanReturnOperator (return true/false in Boolean methods)
  * - Exception type mutations are available via `ExceptionTypeSwapOperator`
- *   (upstream [PR #16](https://github.com/anschnapp/mutflow/pull/16))
  * - Exception types: `validateInput` throws `IllegalArgumentException`
  *
  * NOTE: Logging and debug checks are annotated with `@SuppressMutations` or

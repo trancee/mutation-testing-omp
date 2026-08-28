@@ -57,3 +57,7 @@ Key finding from the user: the `exception-swap` fork was created by forking upst
 2. For remaining branches, check upstream PR status and continue contributing as PRs.
 3. For `kotlin-native` and `add-pipeline`: stabilize before pushing upstream.
 - Decision recorded as a resolution comment.
+
+## Resolution (2026-08-28)
+
+All 12 fork branches have been merged into upstream mutflow v1.1.1 (commit 2f262dc). PR #16 (ExceptionTypeSwapOperator) and PR #17 (multi-killer zombie detection) are live. The fork (`trancee/mutflow-exception-swap`) is retired — OMP now uses upstream mutflow v1.1.1+ directly. No fork maintenance required.

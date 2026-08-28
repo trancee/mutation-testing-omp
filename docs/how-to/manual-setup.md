@@ -32,15 +32,13 @@ pluginManagement {
 
 mutflow is published to Maven Central only, not the Gradle Plugin Portal. `mavenCentral()` is required.
 
-For exception type mutations and full per-test-per-mutation zombie detection, use the fork version (pending upstream merge). See [CONTEXT.md](../../CONTEXT.md) for details.
-
 ## Add the mutflow plugin
 
 Edit `build.gradle.kts` to apply the plugin:
 
 ```kotlin
 plugins {
-    id("io.github.anschnapp.mutflow") version "1.0.5"
+    id("io.github.anschnapp.mutflow") version "1.1.1"
     // ... existing plugins
 }
 ```
@@ -75,7 +73,7 @@ Add the mutflow JUnit 6 integration and JUnit Jupiter to your dependencies:
 dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.3")
     testImplementation("org.junit.platform:junit-platform-launcher:6.1.3")
-    testImplementation("io.github.anschnapp.mutflow:mutflow-junit6:1.0.5")
+    testImplementation("io.github.anschnapp.mutflow:mutflow-junit6:1.1.1")
 }
 ```
 

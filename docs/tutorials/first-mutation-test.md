@@ -48,7 +48,7 @@ Then edit `build.gradle.kts` to apply the mutflow plugin:
 ```kotlin
 plugins {
     kotlin("jvm") version "2.4.0"
-    id("io.github.anschnapp.mutflow") version "1.0.5"
+    id("io.github.anschnapp.mutflow") version "1.1.1"
     application
 }
 

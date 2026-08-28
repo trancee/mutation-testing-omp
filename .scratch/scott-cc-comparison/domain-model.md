@@ -20,7 +20,7 @@ A category of realistic bug pattern.
 | 2 | Return values | `return x` → `return None/""/` | `BooleanReturnOperator`, `NullableReturnOperator` | ✅ |
 | 3 | Boolean logic | `and` → `or`, negate | `BooleanInversionOperator`, `EqualitySwapOperator`, `BooleanLogicOperator` | ✅ |
 | 4 | Arithmetic operators | `*` → `/`, `+`, `-` | `ArithmeticOperator` | ✅ (+ IR truncate fix) |
-| 5 | Exception types | `raise ValueError` → `TypeError` | NO operator | ✅ via `ExceptionTypeSwapOperator` fork |
+| 5 | Exception types | `raise ValueError` → `TypeError` | NO operator | ✅ via `ExceptionTypeSwapOperator` |
 
 ### Test Isolation
 How mutations are kept separate from the main working tree.
@@ -48,7 +48,7 @@ The component that interprets test results to assess test quality.
 | Mutation score | killed / total | killed / total |
 | Quality bands | >80% Excellent, >60% Good, >40% Fair | >80% Excellent, >60% Good, >30% Fair, <30% Poor |
 | Confidence | Not tracked | Low (<10), Medium (10-50), High (50+) |
-| Zombie detection | Tests never failed across all mutations | Per-test-per-mutation matrix (all killer tests tracked via fork) |
+| Zombie detection | Tests never failed across all mutations | Per-test-per-mutation matrix (all killer tests tracked) |
 | Redundant groups | Tests that always fail together (>5 in same group) | ❌ Not present |
 | Over-mocked detection | >5 mocks per test | >3 mocks per test (MockK + Mockito) |
 | Missing coverage | Surviving mutations → suggestions | Surviving mutations → recommendations |

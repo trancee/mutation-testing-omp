@@ -35,9 +35,9 @@ mutflow's predefined operators cover 4 of Scott-CC's 5 mutation strategies:
 - Return values: `BooleanReturnOperator`, `NullableReturnOperator`
 - Boolean logic: `BooleanInversionOperator`, `EqualitySwapOperator`, `BooleanLogicOperator`
 - Arithmetic: `ArithmeticOperator`
-- Exception types: NO mutflow operator — skip this strategy
+- Exception types: `ExceptionTypeSwapOperator`
 
-Your target annotations should focus on code that these operators will meaningfully mutate: comparisons, arithmetic, boolean logic, return values.
+Your target annotations should focus on code that these operators will meaningfully mutate: comparisons, arithmetic, boolean logic, return values, and exception-throwing paths.
 
 ## Output format
 

@@ -128,7 +128,7 @@ data class MutationResult(
 )
 ```
 
-Key point: `killedByTests` (enabled by the `feature/zombie-detection` fork branch) captures **all** tests that kill each mutation, not just the first. This is the OMP equivalent of Scott-CC's per-mutation `failures` list.
+Key point: `killedByTests` (multi-killer tracking, upstream v1.1.1+) captures **all** tests that kill each mutation, not just the first. This is the OMP equivalent of Scott-CC's per-mutation `failures` list.
 
 ### 3.3 MutationResults data class
 

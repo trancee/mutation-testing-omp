@@ -43,11 +43,11 @@ Source code
 
 4. **JUnit 6 integration**: The `@MutFlowTest` annotation uses JUnit 6's `ClassTemplateInvocationContextProvider` to orchestrate baseline (run 0) + mutation runs (run 1+). `MutFlow.underTest { }` blocks wrap business logic calls for mutation injection.
 
-5. **Aggregate verdicts**: mutflow records `Killed(testNames: Set<String>)` — ALL tests that catch each mutation (via the fork), `Survived` (no test caught it), `TimedOut` (infinite loop). The `mutation-results.gradle.kts` task builds a full `testKillerMatrix` mapping each test to the mutation source locations it killed. Zombie detection is now precise — tests that execute but never kill any mutation are flagged.
+5. **Aggregate verdicts**: mutflow records `Killed(testNames: Set<String>)` — ALL tests that catch each mutation, `Survived` (no test caught it), `TimedOut` (infinite loop). The `mutation-results.gradle.kts` task builds a full `testKillerMatrix` mapping each test → mutation source locations it killed. Zombie detection is now precise — tests that execute but never kill any mutation are flagged.
 
 ## Why this matters for the OMP agent system
 
 - **No git worktrees**: The saboteur doesn't need to create worktrees per mutation — mutflow handles isolation via compile-once.
 - **One executor per test class**: Not per mutation. Each test class with `@MutFlowTest` runs all its mutations in one `./gradlew test` invocation.
 - **Stdout capture**: mutflow prints `MutationTestingSummary` to stdout. The `mutation-results.gradle.kts` task captures this from JUnit XML's `<system-out>` elements (not from Gradle's `StandardOutputListener`, which is unavailable in Kotlin DSL on Gradle 9.x).
-- **Full per-test-per-mutation zombie detection**: The fork's `MutFlowSession.markTestFailed()` now tracks ALL failing tests per mutation (via a `mutableSetOf<String>`). The parser extracts all "killed by:" lines and builds `testKillerMatrix` for precise zombie candidate identification.
+- **Full per-test-per-mutation zombie detection**: mutflow's `MutFlowSession.markTestFailed()` now tracks ALL tests that kill each mutation (via a `Set<String>`). The parser extracts all "killed by:" lines and builds `testKillerMatrix` for precise zombie candidate identification. Included in upstream mutflow v1.1.1+.

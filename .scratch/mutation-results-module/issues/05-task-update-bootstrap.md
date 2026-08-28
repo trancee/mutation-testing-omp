@@ -11,8 +11,8 @@ How do we update `bootstrap-mutation-testing.sh` to wire the typed Kotlin module
 ### Current bootstrap behavior
 
 The script copies `.omp/` (agents, skills, `mutation-results.gradle.kts`), then uses `sed` to inject:
-1. `id("io.github.anschnapp.mutflow") version "1.0.5"` into `plugins {}`
-2. `io.github.anschnapp.mutflow:mutflow-junit6:1.0.5` into `dependencies {}`
+1. `id("io.github.anschnapp.mutflow") version "1.1.1"` into `plugins {}`
+2. `io.github.anschnapp.mutflow:mutflow-junit6:1.1.1` into `dependencies {}`
 3. `apply(from = rootProject.file(".omp/mutation-results.gradle.kts"))` after the first `}`
 
 ### Required changes

@@ -19,7 +19,7 @@ Scott-CC detects zombies by comparing per-test outcomes across per-mutation git 
 ## Resolution
 
 ### Decisions
-1. **Full per-test-per-mutation zombie detection**: The mutflow fork's `MutFlowSession.markTestFailed()` now tracks ALL tests that catch each mutation (via `killedByTests: MutableSet<String>`). The `mutation-results.gradle.kts` task builds a `testKillerMatrix` mapping each test display name → list of mutation source locations it killed. Zombie candidates = tests in `testMethods` that have NO entry in `testKillerMatrix`.
+1. **Full per-test-per-mutation zombie detection**: mutflow's `MutFlowSession.markTestFailed()` now tracks ALL tests that catch each mutation (via `killedByTests: MutableSet<String>`. The `mutation-results.gradle.kts` task builds a `testKillerMatrix` mapping each test display name → list of mutation source locations it killed. Zombie candidates = tests in `testMethods` that have NO entry in `testKillerMatrix`.
 2. **Quality bands with mutation-count confidence**: Mutation score = killed / total. Excellent >80%, Good 60-80%, Fair 30-60%, Poor <30%. Confidence: <10 mutations = low, 10-50 = medium, 50+ = high.
 3. **Over-mocking detection via mock counting**: Parse test source files, count `mockk()`, `mock()`, `spyk()`, `@MockK`, `@Mock` per test method. Flag tests with >3 mocks as over-mocking candidates. LLM (test-refactor-specialist) reviews flagged tests.
 
@@ -27,7 +27,7 @@ Scott-CC detects zombies by comparing per-test outcomes across per-mutation git 
 
 | Q# | Answer |
 |---|---|
-| 1 | mutflow fork now tracks ALL tests that kill each mutation (via `killedByTests: MutableSet<String>` in `markTestFailed`). JUnit XML shows all tests as "passed" during mutation runs (failures swallowed by the extension). The custom Gradle task captures `killedByTests` array + `testKillerMatrix` for full per-test-per-mutation analysis. |
+| 1 | mutflow now tracks ALL tests that kill each mutation (via `killedByTests: MutableSet<String>` in `markTestFailed`. JUnit XML shows all tests as "passed" during mutation runs (failures swallowed by the extension). The custom Gradle task captures `killedByTests` array + `testKillerMatrix` for full per-test-per-mutation analysis. |
 | 2 | Run model is test-class-level, not per-mutation. All tests in a class execute per mutation run (baseline + N mutation runs). All failing tests per run are tracked (not just the first). "Evaluated" = all tests in the class for each run. "Unevaluated" = tests that never fail and never appear in `testKillerMatrix`. |
 | 3 | mutflow's partial run detection (executedTestIds check) skips mutation testing when running single tests from IDE. Via OMP, the test-executor runs the full class, so partial detection does NOT trigger. |
 | 4 | Kotlin equivalent: MockK's `mockk()` and `spyk()`, Mockito-Kotlin's `mock()` and `mockOrNull()`. Annotations: `@MockK`, `@Mock`. Count per test method, flag >3 as candidates. |

@@ -8,7 +8,7 @@ Blocked by: 03
 
 What are the unit tests for the typed parser, and what sample mutflow stdout cases do they cover?
 
-The current parser has zero tests — the multi-killer regex logic (collecting ALL consecutive "killed by:" lines, lines 196–208) is untested and was written by hand after the fork changes. A regression would silently break zombie detection.
+The current parser has zero tests — the multi-killer regex logic (collecting ALL consecutive "killed by:" lines, lines 196–208) is untested and was written by hand after the multi-killer feature was added to upstream mutflow. A regression would silently break zombie detection.
 
 ### Required tests
 

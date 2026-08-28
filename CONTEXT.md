@@ -18,7 +18,7 @@ mutflow injects ALL mutation variants into the compiled code at compile time, gu
 
 ### Zombie test
 
-A test that passes even when the code is broken (mutated). In Scott-CC's model, a zombie test passes for every mutation. In mutflow's model (this system), a zombie candidate is a test that never appears in the `testKillerMatrix` for any killed mutation — it executes during mutation runs but never kills any mutation. Full per-test-per-mutation tracking is enabled by the fork: mutflow records ALL tests that catch each mutation, not just the first.
+A test that passes even when the code is broken (mutated). In Scott-CC's model, a zombie test passes for every mutation. In mutflow's model (this system), a zombie candidate is a test that never appears in the `testKillerMatrix` for any killed mutation — it executes during mutation runs but never kills any mutation. Full per-test-per-mutation tracking is enabled by mutflow: it records ALL tests that catch each mutation, not just the first.
 
 ### Over-mocked test
 
@@ -42,8 +42,8 @@ A test that uses excessive mocking (`mockk()`, `mock()`), potentially masking re
 | Return values | BooleanReturnOperator + NullableReturnOperator | Full |
 | Boolean logic | BooleanInversionOperator + EqualitySwapOperator + BooleanLogicOperator | Full |
 | Arithmetic | ArithmeticOperator | Full |
-| Exception types | ExceptionTypeSwapOperator (fork) | Implemented (PR [#16](https://github.com/anschnapp/mutflow/pull/16) — pending upstream merge) |
-| Zombie detection | Per-test-per-mutation matrix (fork) | Implemented (PR [#17](https://github.com/anschnapp/mutflow/pull/17) — pending upstream merge) |
+| Exception types | ExceptionTypeSwapOperator | Full |
+| Zombie detection | Per-test-per-mutation matrix | Full |
 
 ## Data contracts
 

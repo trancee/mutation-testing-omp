@@ -11,7 +11,7 @@ Scott-CC's mutation-testing plugin uses 5 domain-specific agents dispatched via 
 Key architectural differences:
 
 - Scott-CC: per-mutant git worktrees, 15 parallel executors, per-test-per-mutation matrix
-- mutflow: compile-once, runtime mutation selection, global synchronized lock, aggregate verdicts (fork now tracks all killers for full per-test-per-mutation matrix)
+- mutflow: compile-once, runtime mutation selection, global synchronized lock, aggregate verdicts (tracks all killers for full per-test-per-mutation matrix)
 
 ## Decision
 
@@ -64,4 +64,4 @@ Use 5 separate OMP agent files in `.omp/agents/`, orchestrated via a sequential 
 
 - **No namespace needed**: OMP uses the `name` field as the dispatch key — `mutation-testing:` prefix is optional (unlike Scott-CC)
 - **mutflow adaptation**: saboteur configures `@MutFlowTest` (no git worktrees); executor runs `./gradlew test` (JUnit extension handles multi-run); one executor per test class (mutflow's global lock serializes mutations)
-- **Zombie detection**: The mutflow fork tracks ALL tests that kill each mutation (not just the first). The `mutation-results.gradle.kts` task builds a `testKillerMatrix` and the test-auditor uses it for precise zombie candidate identification.
+- **Zombie detection**: mutflow tracks ALL tests that kill each mutation (not just the first). The `mutation-results.gradle.kts` task builds a `testKillerMatrix` and the test-auditor uses it for precise zombie candidate identification.

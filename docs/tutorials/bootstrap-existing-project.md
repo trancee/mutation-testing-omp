@@ -51,7 +51,7 @@ Open `build.gradle.kts`. We should see:
 
 ```kotlin
 plugins {
-    id("io.github.anschnapp.mutflow") version "1.0.5"
+    id("io.github.anschnapp.mutflow") version "1.1.1"
     // ... existing plugins
 }
 ```
@@ -68,7 +68,7 @@ apply(from = rootProject.file(".omp/mutation-results.gradle.kts"))
 dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:6.1.3")
     testImplementation("org.junit.platform:junit-platform-launcher:6.1.3")
-    testImplementation("io.github.anschnapp.mutflow:mutflow-junit6:1.0.5")
+    testImplementation("io.github.anschnapp.mutflow:mutflow-junit6:1.1.1")
 }
 ```
 

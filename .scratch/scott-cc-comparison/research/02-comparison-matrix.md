@@ -215,4 +215,8 @@ hint-for-gradle-and-jooq-user (doc-only hint)
 | OMP-only | 5 rows |
 | N/A (not applicable / architectural) | 8 rows |
 
-**Net:** OMP has 5 features Scott-CC lacks; Scott-CC has 10 features OMP lacks (4 of which are partially bridgeable via fork branches: exception types, multi-killer zombie detection, verification modes, Gradle target scoping, CLI safe-guard).
+**Net:** OMP has 5 features Scott-CC lacks; Scott-CC has 10 features OMP lacks (4 of which were partially bridgeable via fork branches: exception types, multi-killer zombie detection, verification modes, Gradle target scoping, CLI safe-guard).
+
+## Resolution (2026-08-28)
+
+All "fork bridge" entries above are now **upstream in mutflow v1.1.1** (commit 2f262dc). The fork (`trancee/mutflow-exception-swap`) is retired. Features that required fork branches — exception type swap (ExceptionTypeSwapOperator), multi-killer zombie detection, verification modes, Gradle target scoping (includeTargets/excludeTargets), CLI safe-guard, arithmetic IR truncate fix, null-check suppression — are all available in upstream `io.github.anschnapp.mutflow` v1.1.1+. No fork maintenance is required.

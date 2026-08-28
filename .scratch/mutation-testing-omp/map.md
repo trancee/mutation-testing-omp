@@ -44,9 +44,9 @@ Reaches from here when: there exists an `/mutation-test` skill in OMP that dispa
 - **Compile-once meta-mutant**: All mutations injected as IR branches with `MutationRegistry.check()` calls at compile time; runtime selects one per run
 - **Static operator catalog only**: 5 call operators, 2 return operators, 1 function body, 1 when operator — no LLM-guided extension point
 - **Serialized mutation runs**: `synchronized(lock)` in `MutationRegistry.withSession()` — only one mutation session active at a time
-- **Zombie detection**: `MutationResult.Killed(testNames: Set<String>)` captures ALL tests that kill each mutation (via the fork); `Survived` for zombie mutations; `testKillerMatrix` provides full per-test-per-mutation mapping
+- **Zombie detection**: `MutationResult.Killed(testNames: Set<String>)` captures ALL tests that kill each mutation; `Survived` for zombie mutations; `testKillerMatrix` provides full per-test-per-mutation mapping
 - **JUnit 6 extension**: `@MutFlowTest` + `MutFlowExtension` uses `ClassTemplateInvocationContextProvider` to run baseline (run 0) then one mutation per run (run 1+)
-- **Implication**: mutflow's compile-once approach replaces Scott-CC's per-mutant git worktrees — no git worktree needed, with full per-test-per-mutation zombie detection via the fork
+- **Implication**: mutflow's compile-once approach replaces Scott-CC's per-mutant git worktrees — no git worktree needed, with full per-test-per-mutation zombie detection
 
 ### D1 resolved — Agent structure (grilling 2026-08-22)
 - **5 separate agent files** in `.omp/agents/`: test-quality-reviewer (orchestrator), test-saboteur, test-executor, test-auditor, test-refactor-specialist
@@ -67,15 +67,15 @@ Reaches from here when: there exists an `/mutation-test` skill in OMP that dispa
 ### D2 resolved — Semantic mutations (grilling 2026-08-22)
 - **mutflow operators as-is + LLM suppression targeting**: No separate mutation injection. Saboteur adds `@MutationTarget` to business-logic classes, `// mutflow:ignore` to framework code
 - **Pre-select targets via LLM**: LLM proactively identifies business logic vs framework noise before mutflow runs
-- **4 of 5 Scott-CC strategies map to mutflow**: Boundary (RelationalComparison + ConstantBoundary), Return Values (BooleanReturn + NullableReturn), Boolean Logic (BooleanInversion + EqualitySwap + BooleanLogic), Arithmetic (ArithmeticOperator). Exception types now covered via ExceptionTypeSwapOperator (upstream PR #16)
+- **4 of 5 Scott-CC strategies map to mutflow**: Boundary (RelationalComparison + ConstantBoundary), Return Values (BooleanReturn + NullableReturn), Boolean Logic (BooleanInversion + EqualitySwap + BooleanLogic), Arithmetic (ArithmeticOperator). Exception types covered via ExceptionTypeSwapOperator
 - **Saboteur role redefined**: Targeting specialist, not mutation creator. mutflow's compiler plugin injects all mutations at compile time
 
 ### D2 implication for not-yet-specified
 - "Whether to use mutflow's operators exclusively or augment with LLM" → resolved: as-is + LLM suppression targeting
-- Exception type mutations now covered (ExceptionTypeSwapOperator implemented, upstream PR #16 open)
+- Exception type mutations now covered (ExceptionTypeSwapOperator
 
 ### D4 resolved — Zombie detection
-- **Full per-test-per-mutation zombie detection**: mutflow fork tracks ALL tests that kill each mutation (via `Set<String>` in `markTestFailed`). The `mutation-results.gradle.kts` task builds `testKillerMatrix` mapping each test → mutation source locations killed. Zombie candidates = tests that never appear in the matrix.
+- **Full per-test-per-mutation zombie detection**: mutflow tracks ALL tests that kill each mutation (via `Set<String>` in `markTestFailed`). The `mutation-results.gradle.kts` task builds a `testKillerMatrix` mapping each test → mutation source locations killed. Zombie candidates = tests that never appear in the matrix.
 - **Quality bands with mutation-count confidence**: Score = killed / total. Excellent >80%, Good 60-80%, Fair 30-60%, Poor <30%. Confidence: <10 mutations = low, 10-50 = medium, 50+ = high
 - **Over-mocking detection**: Count MockK `mockk()`/`spyk()`/`@MockK` and Mockito `mock()`/`@Mock` per test method. Flag >3 mocks as candidates
 - **Custom Gradle task JSON** (from D3): `killedByTests` array + `testKillerMatrix` — no console parsing needed
@@ -89,9 +89,9 @@ Reaches from here when: there exists an `/mutation-test` skill in OMP that dispa
 - R1 (OMP agent dispatch) → resolved
 - R2 (mutflow architecture) → resolved
 - D1 (agent structure) → resolved: 5 agents in `.omp/agents/`, sequential handshake, restricted tools, thin skill
-- D2 (semantic mutations) → resolved: mutflow operators as-is + LLM suppression targeting; 4/5 strategies map; exception types covered via ExceptionTypeSwapOperator (upstream PR #16)
+- D2 (semantic mutations) → resolved: mutflow operators as-is + LLM suppression targeting; 5/5 strategies map (exception types via ExceptionTypeSwapOperator
 - D3 (parallelization) → resolved: parallel batch, custom Gradle task + JUnit XML, 15-min fixed timeout
-- D4 (zombie detection) → resolved: full per-test-per-mutation matrix via mutflow fork (tracks all killers), testKillerMatrix in JSON, precise zombie candidate identification
+- D4 (zombie detection) → resolved: full per-test-per-mutation matrix via mutflow (tracks all killers), testKillerMatrix in JSON, precise zombie candidate identification
 
 ## Out of scope
 

@@ -65,7 +65,7 @@
 - Addresses a real-world goal: "set up mutation testing manually" ✓
 - Assumes competence ✓
 - Executable, step-by-step instructions ✓
-- Handles real-world complexity (fork note, buildSrc setup) ✓
+- Handles real-world complexity (buildSrc setup) ✓
 - Cross-references bootstrap tutorial instead of re-teaching ✓
 **Issues**: None. Exemplary how-to.
 

@@ -20,7 +20,7 @@ Scott-CC launches 15 test-executor agents in parallel (one per mutation worktree
 
 ### Decisions (from grilling 2026-08-22)
 1. **Parallel batch execution**: All test-executor agents dispatched in one `tasks[]` batch. mutflow's global synchronized lock serializes mutation runs internally. Non-mutated test classes run in parallel; @MutFlowTest classes block-and-wait on the lock. OMP's 32-agent semaphore cap is sufficient for any realistic test suite.
-2. **Custom Gradle task for result capture**: Write a Gradle task that runs mutflow tests and outputs structured JSON with fields: `pointId`, `variantIndex`, `result` (Killed/Survived/TimedOut), `killedByTests` (array of ALL tests that caught each mutation, from the fork), `testKillerMatrix` (test → mutation source locations). Cross-reference with JUnit XML for test-level metadata.
+2. **Custom Gradle task for result capture**: Write a Gradle task that runs mutflow tests and outputs structured JSON with fields: `pointId`, `variantIndex`, `result` (Killed/Survived/TimedOut), `killedByTests` (array of ALL tests that caught each mutation), `testKillerMatrix` (test → mutation source locations). Cross-reference with JUnit XML for test-level metadata.
 3. **Fixed 15-min OMP timeout per test class**: Simple, generous. Covers baseline + all mutation runs (60s mutflow timeout per run + overhead). Avoids complex pre-run baseline calculation.
 
 ### Answering the 5 ticket questions

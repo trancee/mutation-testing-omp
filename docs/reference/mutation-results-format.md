@@ -52,7 +52,7 @@ Name of the first test that caught the mutation (JUnit display name). `null` if 
 
 ### mutations[].killedByTests
 
-- Array of ALL test display names that caught the mutation. Empty array `[]` if the mutation survived or timed out. The mutflow fork records every test that fails during a mutation run, not just the first.
+- Array of ALL test display names that caught the mutation. Empty array `[]` if the mutation survived or timed out. mutflow records every test that fails during a mutation run, not just the first.
 
 ### executionGaps[].type
 

@@ -50,3 +50,7 @@ update-versions
 - Relevant branches identified: `exception-type-swap` (Strategy 5: Exception types), `zombie-detection` (multi-killer tracking), `double-arithmetic-ir-when-truncate-fix` (arithmetic correctness), `avoid-mutating-null-checks` (noise reduction), `introduce-verification-mode` (safety), `add-option-to-define-mutation-targets-via-gradle-config` (interface scoping), `optional-extra-cli-safe-guard-verification` (CLI guard)
 
 This fully satisfies R1's acceptance criteria. No separate subagent run needed.
+
+## Resolution (2026-08-28)
+
+All 12 fork branches are now merged into upstream mutflow v1.1.1 (commit 2f262dc). ExceptionTypeSwapOperator (PR #16) and multi-killer zombie detection (PR #17) are live in the upstream release. The fork (`trancee/mutflow-exception-swap`) is retired — use upstream `io.github.anschnapp.mutflow` v1.1.1+ instead.

@@ -35,7 +35,7 @@ Reaches from here when: a side-by-side matrix documents every difference across 
 - [Research R1: mutflow fork catalog](issues/01-research-mutflow-fork-branches.md): R1 resolved as redundant — R2 section 8 already cataloged all 12 fork branches with descriptions, gap mappings, and upstreamability assessments.
 - [Research R2: comparison matrix](research/02-comparison-matrix.md): Full 51-row matrix across 8 sections. Scott-CC lacks in OMP: redundant test detection, auto-refactoring, NL triggers, mode abstraction, `--focus`, diff/rollback, confidence intervals, gap reporting. OMP lacks in Scott-CC: confidence levels, typed JSON module (18 tests), verification modes, CLI safe-guard, setup subcommand. 4 fork branches bridge gaps. Parallelization gap is inherent to mutflow architecture.
 - [D1: Prioritize Scott-CC gaps](issues/03-decide-prioritize-gaps.md): **Re-resolved.** 9 of 10 gaps selected for implementation (L: redundant test detection, auto-refactoring; M: auto-approve, mode abstraction; S: --focus, diff generation, confidence intervals, gap reporting; trivial: rollback instructions). NL triggers declined (XL). All 5 fork cherry-picks declined.
-- [D2: Upstream recommendations](issues/04-decide-upstream-recommendations.md): **All 12 fork branches already upstream-trackable** — none are fork-private modifications (fork was created from upstream; branches came along). exception-type-swap has PR #16 open upstream. Recommendation: continue existing upstreaming process; stabilize kotlin-native and pipeline before pushing.
+- [D2: Upstream recommendations](issues/04-decide-upstream-recommendations.md): **All 12 fork branches now merged upstream** — all branches are upstream-trackable; none are fork-private modifications (fork was created from upstream; branches came along). exception-type-swap (PR #16) and zombie-detection (PR #17) are merged in upstream v1.1.1. The fork (`trancee/mutflow-exception-swap`) is retired — OMP now uses upstream mutflow v1.1.1+ directly.
 
 ## Not yet specified
 
@@ -52,3 +52,7 @@ Reaches from here when: a side-by-side matrix documents every difference across 
 
 All 4 wayfinder tickets resolved. Destination (comparison + decisions) reached. User has now selected 9 of 10 Scott-CC→OMP gaps for implementation — this is a new implementation effort beyond the original destination. A new wayfinder map is recommended to plan the 9-feature implementation.
 
+
+## Resolution: fork features now upstream (2026-08-28)
+
+mutflow v1.1.1 includes all 12 fork branches merged upstream — ExceptionTypeSwapOperator (PR #16), multi-killer zombie detection (PR #17), VerificationMode, includeTargets/excludeTargets, EqualitySwapOperator null-check suppression, ArithmeticOperator IR truncate fix, CLI safe-guard, and more. The fork (`trancee/mutflow-exception-swap`) is no longer needed. All "via fork" references in this analysis are historical; use upstream mutflow v1.1.1+ instead.

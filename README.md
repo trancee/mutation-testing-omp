@@ -22,11 +22,10 @@ See the [documentation index](docs/index.md) for tutorials, how-to guides, and r
 
 The `sample/` directory contains a reference Kotlin project with a `Calculator` class at **100% mutation coverage** (31/31 mutations killed, Excellent band, Medium confidence). Run `gradle mutationResults` in `sample/` to reproduce.
 
-The sample exercises all mutation strategies including `validateInput`, which throws `IllegalArgumentException` — demonstrating exception type mutation support via the fork.
+The sample exercises all mutation strategies including `validateInput`, which throws `IllegalArgumentException` — demonstrating exception type mutation support.
 
 ## Known limitations
 
 - **Kotlin Multiplatform (JVM-first)**: mutflow is JVM-only. The `--kmp` bootstrap flag targets JVM source sets only.
-- **Upstream mutflow**: Exception type swap and full per-test-per-mutation zombie detection are implemented in the fork ([PR #16](https://github.com/anschnapp/mutflow/pull/16), [PR #17](https://github.com/anschnapp/mutflow/pull/17)), pending upstream merge.
 
 See [CONTEXT.md](CONTEXT.md) for details.
