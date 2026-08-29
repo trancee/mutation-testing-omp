@@ -39,7 +39,7 @@ fi
 
 # markdownlint patterns: include negation patterns for directories to skip
 # Do NOT exclude README.md — it must pass markdownlint too.
-ml_files=("${files[@]}" "!docs/agents/**" "!.scratch/**" "!.agents/**" "!build/**" "!.gradle/**")
+ml_files=("${files[@]}" "!.scratch/**" "!.agents/**" "!build/**" "!.gradle/**")
 
 echo "[check-markdown] Running markdownlint-cli2: ${ml_files[*]}"
 npx --yes markdownlint-cli2 "${ml_files[@]}"

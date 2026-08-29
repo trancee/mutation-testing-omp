@@ -1,6 +1,6 @@
-# Domain Docs
+# How agents use domain documentation
 
-How the engineering skills should consume this repo's domain documentation when exploring the codebase.
+Use this guide when an engineering skill needs domain context before exploring or changing a repository.
 
 ## Before exploring, read these
 

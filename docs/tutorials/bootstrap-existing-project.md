@@ -28,8 +28,6 @@ Bootstrapping mutation testing into: .
 Mode: JVM
 
 Copying .omp agents, skills, and scripts...
-Setting up typed mutation-results module (buildSrc)...
-  Created buildSrc/ with typed MutationResults module
 Configuring settings.gradle.kts...
   Added pluginManagement block
 Configuring build.gradle.kts...
@@ -37,6 +35,9 @@ Configuring build.gradle.kts...
   Applied mutation-results.gradle.kts
   Added JUnit 6 + mutflow-junit6 dependencies
   Added mutflow configuration
+  Detected Kotlin 2.4.0 from build.gradle.kts
+Setting up typed mutation-results module (buildSrc)...
+  Created buildSrc/ with typed MutationResults module (Kotlin 2.4.0)
 
 ✅ Bootstrap complete!
 ```
@@ -156,7 +157,7 @@ class UserServiceTest {
 }
 ```
 
-We wrap the call to the `@MutationTarget` instance in `MutFlow.underTest { }` so mutflow can inject mutations — not the `assertTrue` itself, only the call to the code under test.
+We wrap the call to the `@MutationTarget` instance in `MutFlow.underTest { }` so mutflow can inject mutations. We wrap the code under test, not the `assertTrue` call.
 
 For more on this pattern, see [how to fix surviving mutations](../how-to/fix-surviving-mutations.md).
 
@@ -168,19 +169,23 @@ Run the `mutationResults` task:
 gradle mutationResults
 ```
 
+Gradle may print `Unsupported Kotlin plugin version` when its embedded Kotlin version differs from 2.4.0 while compiling `buildSrc`. The expected run still reaches the mutation summary below.
+
 We'll see the mutflow summary at the bottom:
 
 ```
 ╔════════════════════════════════╗
 ║      MUTATION TESTING SUMMARY  ║
 ╠════════════════════════════════╣
-║  Killed:  2  ✓                 ║
-║  Survived: 1  ✗                ║
+║  Killed:  3  ✓                 ║
+║  Survived: 5  ✗                ║
 ║  Timed out: 0  ✓               ║
 ╚════════════════════════════════╝
 ```
 
-If some mutations survived, we can add boundary tests to kill them — see the [interpret results](../how-to/interpret-results.md) guide for details.
+The `mutationResults` task records survivors in the JSON report and completes successfully. Survivors are findings to investigate, not an infrastructure failure.
+
+If some mutations survived, we can add boundary tests to kill them. See the [interpret results](../how-to/interpret-results.md) guide for details.
 
 ## Summary
 

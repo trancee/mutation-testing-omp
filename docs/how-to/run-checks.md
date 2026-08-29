@@ -4,8 +4,8 @@ Use this guide when you need to verify that your documentation changes pass the 
 
 ## Prerequisites
 
-- **Node.js** (required for `markdownlint-cli2` — style checking)
-- **lychee** (required for link checking — validates internal and external URLs)
+- **Node.js**, required for `markdownlint-cli2` style checks
+- **lychee**, required for internal and external link checks
 
 ### Install Node.js
 
@@ -54,12 +54,12 @@ curl -LsSf https://github.com/lycheeverse/lychee/releases/latest/download/lychee
 ./scripts/check-markdown.sh --offline docs/
 ```
 
-The `--offline` flag skips external URL checks — useful when you don't have network access.
+The `--offline` flag skips external URL checks. Use it when the network is unavailable.
 
 ## What the checks do
 
-1. **markdownlint-cli2** — checks Markdown style (headings, formatting, blank lines, etc.). Config lives in `.markdownlint-cli2.jsonc`.
-2. **lychee** — checks for broken links (internal file links and anchors, plus external URLs unless `--offline`).
+1. **markdownlint-cli2** checks Markdown headings, formatting, and blank lines. Configuration lives in `.markdownlint-cli2.jsonc`.
+2. **lychee** checks internal and external links. Offline mode checks internal links only.
 
 ## Common issues and fixes
 
@@ -67,9 +67,9 @@ The `--offline` flag skips external URL checks — useful when you don't have ne
 |-------|-------|-----|
 | `npx: command not found` | Node.js not installed | Install Node.js (see above) |
 | `lychee: command not found` | lychee not installed | Install lychee (see above) |
-| MD047 | File does not end with a single newline | Add a blank line at the end of the file |
-| MD024 | Duplicate headings | Use unique headings or disable MD024 (already disabled in config) |
-| MD013 | Line too long | Already disabled in config — long prose is allowed |
+| MD047 | File does not end with one newline | End the file with exactly one newline |
+| MD024 | Duplicate headings | Use unique headings or leave the existing project exemption in place |
+| MD013 | Line too long | No action; the project configuration disables this rule |
 
 ## CI behavior
 

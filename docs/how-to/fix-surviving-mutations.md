@@ -23,8 +23,8 @@ mutflow's summary shows survivors:
 ║      SURVIVED - no test caught this mutation!                   ║
 ```
 
-- **Source location**: `Calculator.kt:35` — the file and line of the mutated code
-- **Operator change**: `>` → `>=` — the original operator and the mutated variant
+- **Source location**: `Calculator.kt:35`, the file and line of the mutated code
+- **Operator change**: `>` → `>=`, the original operator and the mutated variant
 
 ## Step 2: Understand the mutation
 
@@ -67,7 +67,7 @@ Test the exact boundary value. For `x > 0`, test `x = 0` (false under original, 
 
 ### Constant boundary (`0` → `1`, `100` → `99`)
 
-Test the value just above and below the constant. For `x > 0` with the `0 → 1` mutant, test `x = 1` (true original, false mutant) — `x = 0` alone doesn't work (both are false).
+Test the value just above and below the constant. For `x > 0` with the `0 → 1` mutant, test `x = 1` because the original returns true and the mutant returns false. Testing `x = 0` does not distinguish them because both return false.
 
 ### Boolean logic (`&&` → `||`, `==` → `!=`)
 
@@ -79,7 +79,7 @@ Test neutral elements: for `a + b`, test with 0 (`a + 0 = a`); for `a * b`, test
 
 ### Boolean return (`return true` → `return false`)
 
-Add assertions on both truthy and falsy return values — the mutation flips whatever the method returns.
+Add assertions on both true and false return values. The mutation flips whatever the method returns.
 
 ## Verify
 
@@ -88,5 +88,5 @@ Re-run `gradle test` or `gradle mutationResults`. The summary should show the pr
 ## When to stop
 
 - All mutations are killed (100% score)
-- Surviving mutations are confirmed false positives (e.g., the mutation has no meaningful behavior change in your domain)
-- You reach your target mutation score threshold (e.g., 80% for "Excellent" band)
+- Remaining survivors are behaviorally equivalent mutations or explicitly accepted gaps in test coverage
+- You reach your target mutation score, such as a score above 80% for the Excellent band

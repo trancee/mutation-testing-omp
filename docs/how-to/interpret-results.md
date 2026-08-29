@@ -23,8 +23,8 @@ mutflow prints a summary after all runs:
 ╚════════════════════════════════════════════════════════════════╝
 ```
 
-- **Killed** (✓): A test caught the mutation — the test suite is strong for that code
-- **Survived** (✗): No test caught the mutation — there's a test gap. Add a test.
+- **Killed** (✓): A test caught the mutation. No action is required for that mutation.
+- **Survived** (✗): No test caught the mutation. Add a test that distinguishes the original behavior from the mutant.
 - **Timed out** (⏱): The mutation likely caused an infinite loop. Add `// mutflow:ignore` to the affected line or add a timeout guard.
 
 ## Step 2: Calculate your mutation score
@@ -47,27 +47,11 @@ Each survived mutation shows the source location and the operator change:
 - File: `Calculator.kt`, line 35
 - Operator: `>` was mutated to `>=`
 
-## Step 4: Fix surviving mutations
+## Step 4: Choose the next action
 
-For each surviving mutation, add a boundary test that distinguishes the original from the mutant.
+For each surviving mutation, identify an input where the original and mutated operators produce different results. Add an assertion for that input.
 
-For a complete workflow including common patterns per operator type and the trap feature, see [How to fix surviving mutations](fix-surviving-mutations.md).
-
-```kotlin
-// Original: x > 0,  mutant: x >= 0
-// At x=0: original returns false, mutant returns true
-assertFalse(calc.isValid(0))  // catches the > -> >= mutation
-```
-
-**Example**: `0 → 1` constant-boundary on line 23 (`x > 0`):
-
-```kotlin
-// Original: x > 0,  mutant: x > 1
-// At x=1: original returns true, mutant returns false
-assertTrue(calc.isPositive(1))  // catches the 0 -> 1 mutation
-```
-
-General strategy: **test the boundary value** where the operator change produces a different result.
+Follow [How to fix surviving mutations](fix-surviving-mutations.md) for operator-specific boundary patterns and mutation traps.
 
 ## Step 5: Trap a mutation you're fixing
 
@@ -93,8 +77,8 @@ fun processLoop(items: List<String>) {
 }
 ```
 
-## Confidence levels
+## Step 7: Check confidence
 
 For confidence levels based on mutation count, see [Confidence levels in the mutation results reference](../reference/mutation-results-format.md#confidence-levels).
 
-With Low confidence, survivors may be false positives — verify carefully.
+With Low confidence, verify each survivor carefully because the run evaluated fewer than ten mutations.

@@ -11,7 +11,7 @@ Scott-CC's mutation-testing plugin uses 5 domain-specific agents dispatched via 
 Key architectural differences:
 
 - Scott-CC: per-mutant git worktrees, 15 parallel executors, per-test-per-mutation matrix
-- mutflow: compile-once, runtime mutation selection, global synchronized lock, aggregate verdicts (tracks all killers for full per-test-per-mutation matrix)
+- mutflow: compile-once, runtime mutation selection, a per-JVM synchronized lock, and aggregate verdicts that track all killers
 
 ## Decision
 
@@ -53,6 +53,8 @@ Use 5 separate OMP agent files in `.omp/agents/`, orchestrated via a sequential 
 | test-auditor | `test-auditor` | read, grep, glob, bash | @default | Results analysis |
 | test-refactor-specialist | `test-refactor-specialist` | read, edit, write, grep, glob, bash | @review | Test improvement |
 
+This table records the accepted design. The [mutation-testing agent reference](../agents/mutation-testing-agents.md) reflects the current agent metadata.
+
 ## Data flow
 
 1. **Saboteur → Executor**: Source files with `@MutationTarget`, `@MutFlowTest`, `// mutflow:ignore` annotations
@@ -63,5 +65,5 @@ Use 5 separate OMP agent files in `.omp/agents/`, orchestrated via a sequential 
 ## Consequences
 
 - **No namespace needed**: OMP uses the `name` field as the dispatch key — `mutation-testing:` prefix is optional (unlike Scott-CC)
-- **mutflow adaptation**: saboteur configures `@MutFlowTest` (no git worktrees); executor runs `./gradlew test` (JUnit extension handles multi-run); one executor per test class (mutflow's global lock serializes mutations)
+- **mutflow adaptation**: The saboteur configures `@MutFlowTest` without git worktrees. Each executor runs `./gradlew test`, and the JUnit extension handles the baseline and mutation runs for its test class.
 - **Zombie detection**: mutflow tracks ALL tests that kill each mutation (not just the first). The `mutation-results.gradle.kts` task builds a `testKillerMatrix` and the test-auditor uses it for precise zombie candidate identification.

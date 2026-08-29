@@ -1,48 +1,44 @@
 # About the OMP 5-agent mutation testing system
 
-The mutation testing system uses five specialized agents that run in a sequential handshake. Each agent has a single responsibility.
+The mutation-testing pipeline separates source targeting, execution, analysis, and test improvement. A fifth agent coordinates those four responsibilities.
 
-## Agent table
+## Why the work is separated
 
-| Agent | Dispatch key | Tools | Model | Role |
-|-------|-------------|-------|-------|------|
-| `test-quality-reviewer` | `test-quality-reviewer` | task, hub, read, grep, glob, bash | @review | Orchestrator — coordinates the pipeline |
-| `test-saboteur` | `test-saboteur` | bash, read, write, edit, grep, glob, ast_grep, lsp | @default | Mutation targeting — adds `@MutationTarget`, `@MutFlowTest`, `// mutflow:ignore` |
-| `test-executor` | `test-executor` | bash, read, grep, glob | @default | Test execution — runs `./gradlew test`, captures stdout + JUnit XML + JSON |
-| `test-auditor` | `test-auditor` | read, grep, glob, bash | @default | Results analysis — calculates score, finds zombies, detects over-mocked tests |
-| `test-refactor-specialist` | `test-refactor-specialist` | read, edit, write, grep, glob, bash | @review | Test improvement — proposes boundary tests for surviving mutations |
+Mutation testing combines two kinds of authority that should not sit in one agent. Some steps change production and test sources. Other steps judge the resulting test quality. Separate agents keep those decisions reviewable and allow each role to operate with narrower permissions.
 
-## How the agents work together
+The roles are:
 
-The `/mutation-test` skill dispatches to the `test-quality-reviewer` orchestrator, which runs four phases in order:
+- The reviewer coordinates the run and combines the findings.
+- The saboteur identifies business logic and configures mutflow annotations.
+- Executors run annotated test classes and capture their results.
+- The auditor calculates metrics and identifies weak tests.
+- The refactor specialist proposes or applies test improvements within the approval rules.
 
-1. **Saboteur phase** — the saboteur reads source files, identifies business-logic classes, and annotates them with `@MutationTarget`, annotates test classes with `@MutFlowTest`, and adds `// mutflow:ignore` to framework noise. It also wraps existing assertions in `MutFlow.underTest { }` blocks.
+The exact dispatch keys, inputs, outputs, and declared tools are listed in the [mutation-testing agent reference](../agents/mutation-testing-agents.md).
 
-2. **Executor phase** — the orchestrator dispatches one `test-executor` per `@MutFlowTest` class in a parallel `task` batch. Each executor runs `./gradlew test --tests <TestClass>`. mutflow's JUnit 6 extension handles the baseline run (run 0) and one mutation per subsequent run internally.
+## How work moves through the pipeline
 
-3. **Audit phase** — the auditor parses the `mutation-results.json` output and JUnit XML, calculates the mutation score, identifies zombie test candidates, and detects over-mocked tests.
+The `/mutation-test` skill sends the project and command options to the reviewer. The reviewer then coordinates four phases:
 
-4. **Refactor phase** — the refactor specialist reviews the auditor's findings and generates improved test code for flagged issues.
+1. The saboteur selects mutation targets and prepares their tests.
+2. Executors run the prepared test classes and collect mutflow output.
+3. The auditor turns those results into scores, execution gaps, survivor lists, and test-quality findings.
+4. The refactor specialist uses the audit to propose stronger tests.
 
-## Why this order is fixed
+This division keeps each handoff explicit. Executors receive prepared source. The auditor receives completed runs. The refactor specialist receives interpreted findings rather than raw logs.
 
-mutflow's run model requires this ordering:
+## Why the order is fixed
 
-- The saboteur must annotate source before executors run. Without `@MutationTarget` and `@MutFlowTest`, mutflow has no mutation targets.
-- Executors must finish before the auditor. mutflow discovers mutation points during the baseline run, then activates one mutation per subsequent run. The auditor needs all runs complete before calculating scores.
-- The auditor must finish before the refactor specialist. The refactor specialist needs survivor lists and zombie candidates to know which tests to improve.
+mutflow discovers mutation points during a baseline run before it activates individual variants. That engine constraint fixes the central sequence.
 
-Parallel execution happens *within* each phase. Multiple executors run in one `task` batch. mutflow's global synchronized lock (`MutationRegistry.withSession()`) serializes mutation runs internally, so executors block-and-wait rather than running mutations concurrently.
+The saboteur must finish first because mutflow relies on `@MutationTarget`, `@MutFlowTest`, and `MutFlow.underTest`. Executors must finish before the auditor can calculate a complete score. The refactor specialist must wait for the audit because surviving mutations and zombie candidates determine which tests need attention.
 
-## Dispatch keys
+## Why executor dispatch is parallel
 
-Each agent is dispatched by its `name` field in `~/.omp/agent/agents/` or `.omp/agents/`. The orchestrator calls them via the `task` tool:
+The reviewer dispatches one executor per annotated test class in a single task batch. This lets the orchestration layer prepare independent work together. Each executor still runs its baseline before that class's mutation variants, so dispatch concurrency does not change the required per-class ordering.
 
-```
-task with agent: "test-saboteur", task: "Annotate source in <project-path>"
-task with agent: "test-executor", task: "Run tests for <TestClass> in <project-path>"
-task with agent: "test-auditor", task: "Audit results in <project-path>"
-task with agent: "test-refactor-specialist", task: "Improve tests based on audit"
-```
+## Why approval remains separate
 
-For the full design rationale, see [ADR-002](../adr/0002-agent-structure-and-orchestration-model.md).
+The refactor specialist may write approved test refactors when `--auto-approve` is present. Deleting zombie tests or redundant groups always requires explicit approval. This boundary prevents a quality heuristic from removing tests without a human decision.
+
+For the engine model behind these constraints, see [About mutflow's compile-once meta-mutant architecture](mutflow-architecture.md). For the accepted design and alternatives, see [ADR-002](../adr/0002-agent-structure-and-orchestration-model.md).

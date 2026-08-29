@@ -67,6 +67,10 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    testLogging {
+        showStandardStreams = true
+        events("passed", "skipped", "failed")
+    }
 }
 ```
 
@@ -139,7 +143,7 @@ Run the test task:
 gradle test
 ```
 
-We'll see all tests pass, including the mutation runs. At the bottom of the output, mutflow prints a summary:
+Gradle reports surviving mutations as failed dynamic tests, so the task fails at this point. The mutflow summary still appears at the bottom of the output:
 
 ```
 ╔════════════════════════════════╗
@@ -151,7 +155,7 @@ We'll see all tests pass, including the mutation runs. At the bottom of the outp
 ╚════════════════════════════════╝
 ```
 
-Some mutations survived. This is expected — our tests don't cover boundary values yet.
+Three mutations survived. This is expected because our tests do not cover boundary values yet.
 
 ## Step 6: Add boundary tests to kill survivors
 
@@ -164,7 +168,7 @@ fun `isPositive returns false for zero`() {
 }
 ```
 
-This catches the `>` → `>=` and `0` → `-1` mutations. The `0` → `1` mutation still survives — test `x = 1`:
+This catches the `>` → `>=` and `0` → `-1` mutations. The `0` → `1` mutation still survives. Test `x = 1`:
 
 ```kotlin
 @Test
@@ -173,7 +177,7 @@ fun `isPositive returns true for one`() {
 }
 ```
 
-Under the mutant, `1 > 1` is `false` — our assertion catches it.
+Under the mutant, `1 > 1` is `false`, so our assertion catches it.
 
 Re-run `gradle test`. The summary now shows all mutations killed:
 
@@ -181,7 +185,7 @@ Re-run `gradle test`. The summary now shows all mutations killed:
 ╔════════════════════════════════╗
 ║      MUTATION TESTING SUMMARY  ║
 ╠════════════════════════════════╣
-║  Killed:  5  ✓                 ║
+║  Killed:  6  ✓                 ║
 ║  Survived: 0  ✓                ║
 ║  Timed out: 0  ✓               ║
 ╚════════════════════════════════╝

@@ -42,9 +42,9 @@ Use **mutflow** as the mutation engine.
 
 ### Negative
 
-- JVM-only: mutflow checks for `org.jetbrains.kotlin.jvm` plugin only — no KMP/JS/Native support. KMP expansion requires extending the Gradle plugin
+- Non-JVM targets: Kotlin Multiplatform projects can mutate JVM source sets only. Kotlin/JS and Kotlin/Native are unsupported. Supporting them requires changes to the Gradle and compiler plugins.
 - No LLM-guided mutations: all operators are predefined and static. LLM serves as targeting specialist (suppression annotations), not as a mutation generator
-- Global synchronized lock: `MutationRegistry.withSession()` uses `synchronized(lock)` — only one mutation session active at a time, even across test classes
+- Per-JVM synchronized lock: `MutationRegistry.withSession()` permits one active mutation session inside each JVM.
 
 ## Alternatives considered
 

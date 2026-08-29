@@ -1,6 +1,6 @@
 # About mutflow's compile-once meta-mutant architecture
 
-mutflow uses a unique "compile-once meta-mutant" approach that differs from traditional mutation testing tools.
+mutflow's compile-once meta-mutant approach differs from mutation engines that compile the source separately for each mutation.
 
 ## The traditional approach
 
@@ -35,15 +35,15 @@ Source code
 
 ### Key implications
 
-1. **Single compilation**: All mutations compile in one pass. This is faster than per-mutation compilation and eliminates git worktree management.
+1. **Single compilation**: All mutations compile in one pass. This removes per-mutation compilation and git worktree management.
 
-2. **Global synchronized lock**: `MutationRegistry.withSession()` uses `synchronized(lock)` — only one mutation session runs at a time per JVM, even across test classes. In the OMP agent system, parallel executor dispatch handles multiple test classes, but mutflow's JUnit extension serializes mutation runs within each class.
+2. **Per-JVM synchronized lock**: `MutationRegistry.withSession()` uses `synchronized(lock)`, so one mutation session runs at a time inside each JVM. Each test class still runs its baseline before its mutation variants.
 
 3. **Runtime selection**: The `MutationRegistry.check()` calls are no-ops during baseline execution (null active mutation). During mutation runs, one `ActiveMutation` is activated and all others are skipped.
 
 4. **JUnit 6 integration**: The `@MutFlowTest` annotation uses JUnit 6's `ClassTemplateInvocationContextProvider` to orchestrate baseline (run 0) + mutation runs (run 1+). `MutFlow.underTest { }` blocks wrap business logic calls for mutation injection.
 
-5. **Aggregate verdicts**: mutflow records `Killed(testNames: Set<String>)` — ALL tests that catch each mutation, `Survived` (no test caught it), `TimedOut` (infinite loop). The `mutation-results.gradle.kts` task builds a full `testKillerMatrix` mapping each test → mutation source locations it killed. Zombie detection is now precise — tests that execute but never kill any mutation are flagged.
+5. **Aggregate verdicts**: mutflow records `Killed(testNames: Set<String>)`, `Survived`, and `TimedOut` outcomes. The `mutation-results.gradle.kts` task builds a `testKillerMatrix` that maps each test to the mutation source locations it killed. Tests that execute but never kill a mutation become zombie-test candidates.
 
 ## Why this matters for the OMP agent system
 

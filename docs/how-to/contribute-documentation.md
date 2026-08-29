@@ -2,7 +2,7 @@
 
 Use this guide when you are adding, editing, or restructuring documentation in this repository. This guide assumes you are already familiar with Markdown and Git.
 
-The documentation in this repo follows the [Diataxis](https://diataxis.fr) framework, which classifies every document into exactly one of four types. Before you write, classify your content. If it serves two needs, split it.
+Reader-facing pages in this repository follow the [Diataxis](https://diataxis.fr) framework. Give each page one primary type. The documentation index may link across types, while ADRs and domain context keep their established formats.
 
 ## Prerequisites
 
@@ -40,7 +40,9 @@ docs/
   explanation/      # Explanation — understanding-oriented ("Why does this...")
 ```
 
-File names should be short, descriptive, and use lowercase with hyphens. Prefix titles with the type explicitly (e.g., `# Tutorial: Your first mutation test`, `# How to fix surviving mutations`, `# Reference: mutation-results.json format`).
+The `docs/agents/` branch is organized by audience rather than type. Keep each page within that branch focused on one need, such as a how-to guide or reference. Store accepted decision records in `docs/adr/`.
+
+File names should be short, descriptive, and use lowercase with hyphens. Make the type clear in the title: `# Tutorial: Your first mutation test`, `# How to fix surviving mutations`, `# mutation-test command reference`, or `# About mutflow's architecture`.
 
 ## Step 3: Write according to your type's rules
 

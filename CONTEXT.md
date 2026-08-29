@@ -1,24 +1,24 @@
-# Context: Mutation Testing Agent System
+# Context: Mutation testing agent system
 
 ## Overview
 
 A 5-agent mutation testing system for Kotlin (JVM-first) projects, built on OMP's agent/task/skill architecture and powered by [mutflow](https://github.com/anschnapp/mutflow) as the underlying mutation engine.
 
-This system ports [Scott-CC's](https://github.com/citadelgrad/scott-cc/tree/main/plugins/mutation-testing) multi-agent orchestration and LLM-guided semantic mutations to OMP, adapting from Scott-CC's per-mutant git worktree model to mutflow's compile-once meta-mutant architecture.
+The system uses mutflow's compile-once engine and predefined operators. Agents select targets, execute tests, calculate quality metrics, and propose test improvements. They do not generate mutation operators.
 
 ## Key concepts
 
 ### Mutation testing
 
-Injecting small faults (mutations) into source code and running tests to see if they catch the faults. Metrics: mutation score = killed / (total - gaps). High score = high-quality tests. Returns null when no mutations are evaluable (denominator is 0).
+Injecting small faults (mutations) into source code and running tests to see whether they catch the faults. The mutation score is `killed / (total - gaps)`. A higher score means the tests detected a larger share of evaluated mutations. The score is null when no mutations are evaluable.
 
 ### Meta-mutant (mutflow)
 
-mutflow injects ALL mutation variants into the compiled code at compile time, guarded by conditional branches with `MutationRegistry.check()` calls. At runtime, one variant is activated per test run. This is a "compile-once" approach — no per-mutation recompilation needed.
+mutflow injects all mutation variants into the compiled code, guarded by conditional branches with `MutationRegistry.check()` calls. At runtime, one variant is active per test run. This compile-once approach avoids per-mutation recompilation.
 
 ### Zombie test
 
-A test that passes even when the code is broken (mutated). In Scott-CC's model, a zombie test passes for every mutation. In mutflow's model (this system), a zombie candidate is a test that never appears in the `testKillerMatrix` for any killed mutation — it executes during mutation runs but never kills any mutation. Full per-test-per-mutation tracking is enabled by mutflow: it records ALL tests that catch each mutation, not just the first.
+A test that passes even when the code is mutated. In Scott-CC's model, a zombie test passes for every mutation. In this system, a zombie candidate is a test that never appears in the `testKillerMatrix` for any killed mutation. It executes during mutation runs but never kills a mutation. mutflow records every test that catches each mutation, not only the first.
 
 ### Over-mocked test
 
@@ -51,11 +51,11 @@ The `mutationResults` Gradle task outputs `mutation-results.json` including `kil
 
 ## Decisions deferred to v2
 
-- KMP/JS/Native target support (mutflow is JVM-only)
+- Kotlin/JS and Kotlin/Native mutation targets. Kotlin Multiplatform setup currently covers JVM source sets only.
 
 ## References
 
-- mutflow: https://github.com/anschnapp/mutflow
-- ADR-001: Use mutflow as mutation engine
-- ADR-002: 5-agent architecture and orchestration model
-- `.scratch/omp-mutation-testing/map.md` — Wayfinder map
+- [mutflow](https://github.com/anschnapp/mutflow)
+- [ADR-001: Use mutflow as the mutation engine](docs/adr/0001-use-mutflow-as-mutation-engine.md)
+- [ADR-002: Agent structure and orchestration](docs/adr/0002-agent-structure-and-orchestration-model.md)
+- `.scratch/omp-mutation-testing/map.md`, the Wayfinder map

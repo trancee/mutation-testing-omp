@@ -15,7 +15,7 @@ Copy these from the mutation testing repo into your project root:
 - `.omp/agents/`
 - `.omp/skills/mutation-test/`
 - `.omp/mutation-results.gradle.kts`
-- `.omp/mutation-results-src/` (typed module source — copied to `buildSrc/`)
+- `.omp/mutation-results-src/`, the typed module source copied to `buildSrc/`
 
 ## Add plugin management
 

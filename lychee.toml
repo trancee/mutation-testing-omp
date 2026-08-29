@@ -8,7 +8,6 @@ exclude_path = [
     ".git/",
     ".gradle/",
     ".scratch/",
-    "docs/agents/",
     "build/",
 ]
 
