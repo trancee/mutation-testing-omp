@@ -58,4 +58,4 @@ The `mutationResults` Gradle task outputs `mutation-results.json` including `kil
 - mutflow: https://github.com/anschnapp/mutflow
 - ADR-001: Use mutflow as mutation engine
 - ADR-002: 5-agent architecture and orchestration model
-- `.scratch/mutation-testing-omp/map.md` — Wayfinder map
+- `.scratch/omp-mutation-testing/map.md` — Wayfinder map

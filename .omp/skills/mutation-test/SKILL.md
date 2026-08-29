@@ -63,7 +63,7 @@ For the full explanation of how mutflow's compile-once meta-mutant architecture 
 
 ### Issue tracking
 
-Decisions and issues tracked in `.scratch/mutation-testing-omp/`. See `docs/agents/issue-tracker.md` for the tracking workflow.
+Decisions and issues tracked in `.scratch/omp-mutation-testing/`. See `docs/agents/issue-tracker.md` for the tracking workflow.
 
 ### Dispatch
 

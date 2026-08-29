@@ -5,7 +5,7 @@ Collapse the 224-line `.omp/mutation-results.gradle.kts` Gradle script into a ty
 ## Notes
 
 - **Domain docs**: `CONTEXT.md` (mutation testing, zombie tests, over-mocked tests), ADR-001 (mutflow as engine), ADR-002 (5-agent orchestration)
-- **Issue tracker**: local markdown — `.scratch/mutation-testing-omp/` is a separate effort; this map lives at `.scratch/mutation-results-module/`
+- **Issue tracker**: local markdown — `.scratch/omp-mutation-testing/` is a separate effort; this map lives at `.scratch/mutation-results-module/`
 - **Skills to consult**: grilling (for design decisions), domain-modeling (for data model), research (for Gradle mechanics)
 - **Key constraint**: the typed module must produce `mutation-results.json` with the exact same fields, keys, and structure as the current string-template output — `generatedAt`, `mutationScore`, `qualityBand`, `confidence`, `totalMutations`, `killed`, `survived`, `timedOut`, `testMethods`, `testKillerMatrix`, `mutations[].sourceLocation|originalOperator|variantOperator|result|killedByTest|killedByTests`
 - **Current parsing logic** lives in `MutationResultsTask.parseMutflowSummary()` (lines 168–222 of `.omp/mutation-results.gradle.kts`) — returns `List<Map<String, Any?>>`, no tests

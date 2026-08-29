@@ -12,7 +12,7 @@ Scott-CC's plugin lives at `citadelgrad/scott-cc/tree/main/plugins/mutation-test
 
 OMP's implementation lives in `.omp/` of this repo — a 5-agent OMP system for Kotlin projects using mutflow (compile-once meta-mutant) with a typed Kotlin result-parsing module in buildSrc.
 
-The prior wayfinder maps (`.scratch/mutation-testing-omp/`, `.scratch/mutation-results-module/`) document the porting decisions already made. This ticket goes beyond those maps to identify **residual gaps** — Scott-CC features OMP does not have, and OMP features Scott-CC does not have.
+The prior wayfinder maps (`.scratch/omp-mutation-testing/`, `.scratch/mutation-results-module/`) document the porting decisions already made. This ticket goes beyond those maps to identify **residual gaps** — Scott-CC features OMP does not have, and OMP features Scott-CC does not have.
 
 ### Task
 

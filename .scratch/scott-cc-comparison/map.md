@@ -28,7 +28,7 @@ Reaches from here when: a side-by-side matrix documents every difference across 
 
 **Issue tracker:** local markdown — `.scratch/scott-cc-comparison/`
 
-**Prior wayfinder maps:** `.scratch/mutation-testing-omp/` (all 6 tickets resolved — port is complete), `.scratch/mutation-results-module/` (all 5 tickets resolved — typed module complete). This effort builds on those decisions; it identifies NEW gaps and reconciliation points.
+**Prior wayfinder maps:** `.scratch/omp-mutation-testing/` (all 6 tickets resolved — port is complete), `.scratch/mutation-results-module/` (all 5 tickets resolved — typed module complete). This effort builds on those decisions; it identifies NEW gaps and reconciliation points.
 
 ## Decisions so far
 

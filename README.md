@@ -1,4 +1,4 @@
-# Mutation Testing OMP
+# OMP Mutation Testing
 
 A 5-agent mutation testing system for Kotlin (JVM-first) projects, powered by [mutflow](https://github.com/anschnapp/mutflow) and built on the [OMP](https://omp.sh/) agent/task/skill architecture.
 
